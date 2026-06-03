@@ -111,9 +111,7 @@ export async function runServer(options: RunServerOptions): Promise<void> {
   }
 
   consola.box(
-    `🌐 Usage Viewer: http://localhost:${options.port}/`,
-    `🤖 Models Viewer: http://localhost:${options.port}/?endpoint=http://localhost:${options.port}/v1/models:full`,
-    `🔀 Aliases:       http://localhost:${options.port}/?endpoint=http://localhost:${options.port}/v1/model-aliases`,
+    `🌐 Usage Viewer: http://localhost:${options.port}/\n🤖 Models Viewer: http://localhost:${options.port}/?endpoint=http://localhost:${options.port}/v1/models:full\n🔀 Aliases:       http://localhost:${options.port}/?endpoint=http://localhost:${options.port}/v1/model-aliases`,
   )
 
   serve({
