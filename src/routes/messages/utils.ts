@@ -8,7 +8,7 @@ export function mapOpenAIStopReasonToAnthropic(
   }
   const stopReasonMap = {
     stop: "end_turn",
-    length: "max_tokens",
+    length: "max_completion_tokens",
     tool_calls: "tool_use",
     content_filter: "end_turn",
   } as const

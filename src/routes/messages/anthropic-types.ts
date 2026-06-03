@@ -3,7 +3,7 @@
 export interface AnthropicMessagesPayload {
   model: string
   messages: Array<AnthropicMessage>
-  max_tokens: number
+  max_completion_tokens: number
   system?: string | Array<AnthropicTextBlock>
   metadata?: {
     user_id?: string
@@ -94,7 +94,7 @@ export interface AnthropicResponse {
   model: string
   stop_reason:
     | "end_turn"
-    | "max_tokens"
+    | "max_completion_tokens"
     | "stop_sequence"
     | "tool_use"
     | "pause_turn"
