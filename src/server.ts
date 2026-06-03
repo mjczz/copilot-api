@@ -5,6 +5,8 @@ import { logger } from "hono/logger"
 import { completionRoutes } from "./routes/chat-completions/route"
 import { embeddingRoutes } from "./routes/embeddings/route"
 import { messageRoutes } from "./routes/messages/route"
+import { modelAliasesRoutes } from "./routes/model-aliases/route"
+import { modelExtendedRoutes } from "./routes/models-extended/route"
 import { modelRoutes } from "./routes/models/route"
 import { tokenRoute } from "./routes/token/route"
 import { usageRoute } from "./routes/usage/route"
@@ -29,3 +31,9 @@ server.route("/v1/embeddings", embeddingRoutes)
 
 // Anthropic compatible endpoints
 server.route("/v1/messages", messageRoutes)
+
+// Extended model routes
+server.route("/v1/models:full", modelExtendedRoutes)
+server.route("/models:full", modelExtendedRoutes)
+server.route("/v1/model-aliases", modelAliasesRoutes)
+server.route("/model-aliases", modelAliasesRoutes)

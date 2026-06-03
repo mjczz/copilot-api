@@ -7,9 +7,10 @@ import { awaitApproval } from "~/lib/approval"
 import { checkRateLimit } from "~/lib/rate-limit"
 import { state } from "~/lib/state"
 import {
-  createChatCompletions,
   type ChatCompletionChunk,
   type ChatCompletionResponse,
+  type DispatchContext,
+  dispatchChatCompletions,
 } from "~/services/copilot/create-chat-completions"
 
 import {
@@ -38,7 +39,23 @@ export async function handleCompletion(c: Context) {
     await awaitApproval()
   }
 
-  const response = await createChatCompletions(openAIPayload)
+  const isAgentCall = openAIPayload.messages.some(
+    (m) => m.role === "assistant" || m.role === "tool",
+  )
+  const ctx: DispatchContext = {
+    // Pass the original Anthropic-style model id so the dispatcher can
+    // decide transport selection in the future. The translated payload's
+    // `model` is the rewritten id used for the actual upstream call.
+    model: {
+      id: anthropicPayload.model,
+      transport: "copilot",
+      vendor: "OpenAI",
+    },
+    isAgentCall,
+    vision: true,
+  }
+
+  const response = await dispatchChatCompletions(openAIPayload, ctx)
 
   if (isNonStreaming(response)) {
     consola.debug(
@@ -87,5 +104,5 @@ export async function handleCompletion(c: Context) {
 }
 
 const isNonStreaming = (
-  response: Awaited<ReturnType<typeof createChatCompletions>>,
+  response: Awaited<ReturnType<typeof dispatchChatCompletions>>,
 ): response is ChatCompletionResponse => Object.hasOwn(response, "choices")

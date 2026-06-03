@@ -9,9 +9,10 @@ import { state } from "~/lib/state"
 import { getTokenCount } from "~/lib/tokenizer"
 import { isNullish } from "~/lib/utils"
 import {
-  createChatCompletions,
   type ChatCompletionResponse,
   type ChatCompletionsPayload,
+  type DispatchContext,
+  dispatchChatCompletions,
 } from "~/services/copilot/create-chat-completions"
 
 export async function handleCompletion(c: Context) {
@@ -51,7 +52,16 @@ export async function handleCompletion(c: Context) {
     )
   }
 
-  const response = await createChatCompletions(payload)
+  const isAgentCall = payload.messages.some(
+    (m) => m.role === "assistant" || m.role === "tool",
+  )
+  const ctx: DispatchContext = {
+    model: { id: payload.model, transport: "copilot", vendor: "OpenAI" },
+    isAgentCall,
+    vision: true,
+  }
+
+  const response = await dispatchChatCompletions(payload, ctx)
 
   if (isNonStreaming(response)) {
     consola.debug("Non-streaming response:", JSON.stringify(response))
@@ -68,5 +78,5 @@ export async function handleCompletion(c: Context) {
 }
 
 const isNonStreaming = (
-  response: Awaited<ReturnType<typeof createChatCompletions>>,
+  response: Awaited<ReturnType<typeof dispatchChatCompletions>>,
 ): response is ChatCompletionResponse => Object.hasOwn(response, "choices")

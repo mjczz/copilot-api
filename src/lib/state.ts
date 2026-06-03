@@ -1,4 +1,5 @@
 import type { ModelsResponse } from "~/services/copilot/get-models"
+import type { ModelTransport } from "~/services/transport/types"
 
 export interface State {
   githubToken?: string
@@ -15,6 +16,13 @@ export interface State {
   // Rate limiting configuration
   rateLimitSeconds?: number
   lastRequestTimestamp?: number
+
+  // Transport / routing extension
+  modelTransports?: Record<string, ModelTransport>
+  openAICompatibleProviders?: Record<
+    string,
+    { baseUrl: string; apiKeyEnv: string }
+  >
 }
 
 export const state: State = {

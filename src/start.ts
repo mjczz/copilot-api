@@ -112,6 +112,8 @@ export async function runServer(options: RunServerOptions): Promise<void> {
 
   consola.box(
     `🌐 Usage Viewer: https://ericc-ch.github.io/copilot-api?endpoint=${serverUrl}/usage`,
+    `🤖 Models Viewer: https://ericc-ch.github.io/copilot-api?endpoint=${serverUrl}/v1/models:full`,
+    `🔀 Aliases:       https://ericc-ch.github.io/copilot-api?endpoint=${serverUrl}/v1/model-aliases`,
   )
 
   serve({
