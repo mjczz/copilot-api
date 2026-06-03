@@ -25,8 +25,12 @@ server.get("/", (c) => {
   return c.html(readFileSync(join(__dirname, "../pages/flow.html"), "utf8"))
 })
 
-server.get("/index.html", (c) => {
+server.get("/flow.html", (c) => {
   return c.html(readFileSync(join(__dirname, "../pages/flow.html"), "utf8"))
+})
+
+server.get("/index.html", (c) => {
+  return c.html(readFileSync(join(__dirname, "../pages/index.html"), "utf8"))
 })
 
 server.route("/chat/completions", completionRoutes)
