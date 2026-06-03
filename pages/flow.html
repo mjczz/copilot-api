@@ -1,0 +1,2178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FLOW — copilot-api translation visualizer</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@1&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ====================================================================
+         GITHUB LIGHT THEME
+         ==================================================================== */
+      :root {
+        /* surfaces */
+        --bg: #ffffff;
+        --bg-elev: #f6f8fa;
+        --bg-elev-2: #eaeef2;
+        --bg-elev-3: #d0d7de;
+        --border: #d0d7de;
+        --border-bright: #afb8c1;
+        --border-glow: #8c959f;
+
+        /* text */
+        --text: #24292f;
+        --text-dim: #57606a;
+        --text-faint: #8c959f;
+        --text-mute: #afb8c1;
+
+        /* protocol colors */
+        --c-anthropic: #cf222e;
+        --c-anthropic-soft: rgba(207, 34, 46, 0.08);
+        --c-anthropic-line: rgba(207, 34, 46, 0.4);
+        --c-openai: #0969da;
+        --c-openai-soft: rgba(9, 105, 218, 0.08);
+        --c-openai-line: rgba(9, 105, 218, 0.4);
+        --c-gpt55: #8250df;
+        --c-gpt55-soft: rgba(130, 80, 223, 0.1);
+        --c-translate: #bf8700;
+
+        /* semantics */
+        --c-add: #1a7f37;
+        --c-remove: #cf222e;
+        --c-error: #cf222e;
+        --c-ok: #1a7f37;
+        --c-warn: #bf8700;
+        --c-info: #0969da;
+
+        /* type */
+        --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .app {
+        position: relative;
+        z-index: 1;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 24px 32px 80px;
+      }
+
+      /* ====================================================================
+         HEADER
+         ==================================================================== */
+      .topbar {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .brand-mark {
+        font-size: 32px;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1;
+      }
+      .brand-mark::after {
+        content: "";
+        position: absolute;
+        top: 4px;
+        right: -10px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--c-gpt55);
+      }
+      .brand-tag {
+        font-size: 12px;
+        color: var(--text-dim);
+        padding-top: 4px;
+      }
+
+      .config {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-self: stretch;
+      }
+      .config-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+        flex: 1;
+      }
+      .config-label {
+        font-size: 11px;
+        color: var(--text-dim);
+        font-weight: 500;
+      }
+      .config-input,
+      .config-select {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      .config-input:focus,
+      .config-select:focus {
+        border-color: var(--c-openai);
+        box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
+      }
+      .config-input {
+        width: 100%;
+      }
+      .config-select {
+        cursor: pointer;
+        min-width: 180px;
+      }
+      .config-select option {
+        background: var(--bg-elev);
+        color: var(--text);
+      }
+
+      .actions {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+      }
+      .btn {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 9px 16px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: var(--bg-elev);
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.12s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .btn:hover {
+        background: var(--bg-elev-2);
+        border-color: var(--border-bright);
+      }
+      .btn-primary {
+        background: var(--c-gpt55);
+        color: var(--bg);
+        border-color: var(--c-gpt55);
+      }
+      .btn-primary:hover {
+        background: #fff27a;
+        border-color: #fff27a;
+        box-shadow: 0 0 20px rgba(253, 224, 71, 0.3);
+      }
+      .btn-primary:disabled {
+        background: var(--bg-elev-3);
+        color: var(--text-faint);
+        border-color: var(--border);
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+      }
+      .btn-ghost:hover {
+        background: var(--bg-elev);
+        border-color: var(--border-bright);
+      }
+
+      /* ====================================================================
+         STATUS PILL
+         ==================================================================== */
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-dim);
+        min-width: 110px;
+        justify-content: center;
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-faint);
+      }
+      .status-pill[data-status="idle"] .status-dot { background: var(--text-faint); }
+      .status-pill[data-status="sending"] .status-dot,
+      .status-pill[data-status="streaming"] .status-dot {
+        background: var(--c-openai);
+        animation: pulse 0.9s ease-in-out infinite;
+      }
+      .status-pill[data-status="done"] .status-dot { background: var(--c-ok); }
+      .status-pill[data-status="error"] .status-dot { background: var(--c-error); }
+
+      /* ====================================================================
+         SECTION HEADER (subtitle)
+         ==================================================================== */
+      .lede {
+        margin: 28px 0 24px;
+        max-width: 740px;
+      }
+      .lede h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0 0 8px;
+        color: var(--text);
+      }
+      .lede p {
+        font-family: var(--font-sans);
+        font-size: 13.5px;
+        color: var(--text-dim);
+        margin: 0;
+        line-height: 1.55;
+      }
+      .lede code {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        padding: 1px 5px;
+        border-radius: 3px;
+        color: var(--c-gpt55);
+      }
+
+      /* ====================================================================
+         PRESET CHIPS + REQUEST EDITOR
+         ==================================================================== */
+      .request-strip {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin-bottom: 28px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 20px;
+        align-items: start;
+      }
+      .presets {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 5px 10px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text-dim);
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.12s;
+      }
+      .chip:hover {
+        background: var(--bg-elev-2);
+        color: var(--text);
+        border-color: var(--border-bright);
+      }
+      .chip.active {
+        background: var(--c-openai);
+        color: #fff;
+        border-color: var(--c-openai);
+      }
+      .editor-wrap {
+        position: relative;
+      }
+      .editor-wrap {
+        position: relative;
+      }
+      .editor-container {
+        display: flex;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        overflow: hidden;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      .editor-container:focus-within {
+        border-color: var(--c-openai);
+        box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
+      }
+      .editor-line-numbers {
+        padding: 12px 8px 12px 12px;
+        background: var(--bg-elev);
+        border-right: 1px solid var(--border);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 13px;
+        line-height: 1.6;
+        text-align: right;
+        user-select: none;
+        min-width: 40px;
+      }
+      .editor-textarea {
+        width: 100%;
+        min-height: 160px;
+        max-height: 400px;
+        background: transparent;
+        border: none;
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 13px;
+        line-height: 1.6;
+        padding: 12px 14px;
+        resize: vertical;
+        outline: none;
+        tab-size: 2;
+      }
+      .editor-textarea::placeholder {
+        color: var(--text-faint);
+      }
+      .editor-info {
+        font-size: 10px;
+        color: var(--text-faint);
+        margin-top: 4px;
+      }
+      .editor-info.error {
+        color: var(--c-error);
+      }
+      .editor-info.ok {
+        color: var(--c-ok);
+      }
+
+      /* ====================================================================
+         MAIN FLOW — 3 columns
+         ==================================================================== */
+      .flow {
+        display: grid;
+        grid-template-columns: 1fr 60px 1fr 60px 1fr;
+        gap: 0;
+        margin-bottom: 24px;
+        position: relative;
+      }
+      .lane {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        min-height: 520px;
+        overflow: hidden;
+        position: relative;
+        transition: border-color 0.2s, box-shadow 0.3s;
+      }
+      .lane[data-protocol="anthropic-in"] {
+        border-color: rgba(255, 138, 91, 0.3);
+        box-shadow: 0 0 0 1px rgba(255, 138, 91, 0.05);
+      }
+      .lane[data-protocol="openai"] {
+        border-color: rgba(94, 234, 212, 0.3);
+        box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.05);
+      }
+      .lane[data-protocol="anthropic-out"] {
+        border-color: rgba(255, 138, 91, 0.3);
+        box-shadow: 0 0 0 1px rgba(255, 138, 91, 0.05);
+      }
+      .lane.active {
+        box-shadow: 0 0 0 1px currentColor, 0 0 24px -8px currentColor;
+      }
+      .lane.active[data-protocol="anthropic-in"],
+      .lane.active[data-protocol="anthropic-out"] {
+        border-color: var(--c-anthropic);
+        color: var(--c-anthropic);
+      }
+      .lane.active[data-protocol="openai"] {
+        border-color: var(--c-openai);
+        color: var(--c-openai);
+      }
+
+      .lane-head {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .lane-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--text-dim);
+      }
+      .lane[data-protocol="anthropic-in"] .lane-title { color: var(--c-anthropic); }
+      .lane[data-protocol="openai"] .lane-title { color: var(--c-openai); }
+      .lane[data-protocol="anthropic-out"] .lane-title { color: var(--c-anthropic); }
+      .lane-title-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .lane-method {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--text-faint);
+      }
+      .lane-path {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-dim);
+        margin-top: 2px;
+      }
+
+      .lane-body {
+        flex: 1;
+        overflow: auto;
+        padding: 12px 14px;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        line-height: 1.55;
+      }
+      .lane-body::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      .lane-body::-webkit-scrollbar-track {
+        background: var(--bg-elev);
+      }
+      .lane-body::-webkit-scrollbar-thumb {
+        background: var(--bg-elev-3);
+        border-radius: 4px;
+      }
+      .lane-body::-webkit-scrollbar-thumb:hover {
+        background: var(--border-bright);
+      }
+
+      .lane-foot {
+        padding: 10px 14px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 10.5px;
+        color: var(--text-faint);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        background: var(--bg-elev-2);
+      }
+      .lane-meta {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 10.5px;
+        color: var(--text-faint);
+      }
+      .lane-meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .lane-meta-key { color: var(--text-faint); }
+      .lane-meta-val { color: var(--text); font-weight: 500; }
+
+      .copy-btn {
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-faint);
+        background: transparent;
+        border: 1px solid var(--border);
+        padding: 3px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.12s;
+      }
+      .copy-btn:hover {
+        color: var(--text);
+        border-color: var(--border-bright);
+        background: var(--bg-elev-3);
+      }
+      .copy-btn.copied {
+        color: var(--c-add);
+        border-color: var(--c-add);
+      }
+
+      /* ====================================================================
+         CURL DISPLAY
+         ==================================================================== */
+      .curl-wrap {
+        margin-top: 12px;
+        border-top: 1px dashed var(--border);
+        padding-top: 10px;
+      }
+      .curl-label {
+        font-size: 9.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--text-faint);
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .curl-label .curl-tag {
+        background: var(--bg-elev-3);
+        border: 1px solid var(--border);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 9px;
+      }
+      .curl-code {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-all;
+        color: var(--text);
+        max-height: 140px;
+        overflow: auto;
+      }
+      .curl-code .curl-cmd { color: var(--c-anthropic); font-weight: 600; }
+      .curl-code .curl-flag { color: var(--c-openai); }
+      .curl-code .curl-value { color: var(--c-anthropic); }
+      .curl-code .curl-header { color: var(--c-ok); }
+      .curl-code .curl-dim { color: var(--text-dim); }
+
+      .curl-section {
+        background: var(--bg-elev-2);
+        border-top: 1px solid var(--border);
+        padding: 10px 14px;
+        display: none;
+      }
+      .curl-section.has-data {
+        display: block;
+      }
+
+      /* ====================================================================
+         TOKEN DISPLAY
+         ==================================================================== */
+      .token-display {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .token-display.hidden {
+        display: none;
+      }
+      .token-modal {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 600px;
+        width: 90%;
+      }
+      .token-modal h3 {
+        margin: 0 0 16px;
+        font-size: 14px;
+        color: var(--text);
+      }
+      .token-value {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 12px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        word-break: break-all;
+        color: var(--c-gpt55);
+        margin-bottom: 16px;
+        max-height: 200px;
+        overflow: auto;
+      }
+      .token-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      /* ====================================================================
+         FLOW CONNECTORS
+      ==================================================================== */
+      .connector {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        min-height: 520px;
+      }
+      .connector-line {
+        position: absolute;
+        top: 80px;
+        bottom: 80px;
+        left: 50%;
+        width: 1px;
+        background: linear-gradient(
+          to bottom,
+          transparent 0%,
+          var(--border-bright) 20%,
+          var(--border-bright) 80%,
+          transparent 100%
+        );
+      }
+      .connector-line::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 30px;
+        background: var(--c-gpt55);
+        box-shadow: 0 0 6px var(--c-gpt55);
+        animation: flow-down 1.6s ease-in-out infinite;
+      }
+      @keyframes flow-down {
+        0% { transform: translateY(0); opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { transform: translateY(440px); opacity: 0; }
+      }
+      .connector-label {
+        position: relative;
+        z-index: 1;
+        background: var(--bg);
+        border: 1px solid var(--border-bright);
+        padding: 6px 8px;
+        border-radius: 3px;
+        font-size: 9.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--c-translate);
+        font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
+      }
+      .connector-arrow {
+        position: relative;
+        z-index: 1;
+        margin-top: 6px;
+        color: var(--c-translate);
+        font-size: 14px;
+        line-height: 1;
+        opacity: 0.6;
+        animation: arrow-bob 1.4s ease-in-out infinite;
+      }
+      @keyframes arrow-bob {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(3px); }
+      }
+
+      /* ====================================================================
+         JSON SYNTAX HIGHLIGHTING
+         ==================================================================== */
+      .json-key { color: var(--c-info); }
+      .json-string { color: var(--c-ok); }
+      .json-number { color: var(--c-gpt55); }
+      .json-boolean { color: var(--c-translate); }
+      .json-null { color: var(--text-faint); }
+      .json-punct { color: var(--text-dim); }
+      .json-diff-add { background: rgba(74, 222, 128, 0.15); border-left: 2px solid var(--c-add); padding-left: 4px; display: inline-block; }
+      .json-diff-remove { background: rgba(248, 113, 113, 0.15); border-left: 2px solid var(--c-remove); padding-left: 4px; display: inline-block; text-decoration: line-through; opacity: 0.7; }
+
+      .kv-row {
+        display: grid;
+        grid-template-columns: 130px 1fr;
+        gap: 8px;
+        padding: 2px 0;
+        font-size: 11.5px;
+        align-items: start;
+      }
+      .kv-key {
+        color: var(--text-faint);
+        text-align: right;
+        padding-right: 4px;
+      }
+      .kv-val {
+        color: var(--text);
+        word-break: break-all;
+        font-family: var(--font-mono);
+      }
+      .kv-val.code { color: var(--c-gpt55); }
+      .kv-val.muted { color: var(--text-faint); }
+
+      .empty {
+        color: var(--text-faint);
+        font-style: italic;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        text-align: center;
+        padding: 60px 20px;
+        opacity: 0.6;
+      }
+      .empty::before {
+        content: "—";
+        display: block;
+        font-size: 24px;
+        margin-bottom: 8px;
+        opacity: 0.4;
+      }
+
+      /* ====================================================================
+         STREAMING EVENTS PANEL
+         ==================================================================== */
+      .events-panel {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        margin-bottom: 24px;
+        overflow: hidden;
+      }
+      .events-head {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+      }
+      .events-head:hover { background: var(--bg-elev-2); }
+      .events-title {
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--c-openai);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .events-count {
+        font-size: 10px;
+        color: var(--text-faint);
+        background: var(--bg);
+        padding: 2px 8px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        font-weight: 500;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+      .events-toggle {
+        font-size: 14px;
+        color: var(--text-faint);
+        transition: transform 0.2s;
+      }
+      .events-panel.collapsed .events-toggle { transform: rotate(-90deg); }
+      .events-panel.collapsed .events-body { display: none; }
+      .events-body {
+        max-height: 320px;
+        overflow: auto;
+        padding: 8px 0;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        line-height: 1.5;
+      }
+      .event-row {
+        display: grid;
+        grid-template-columns: 60px 130px 1fr 80px;
+        gap: 12px;
+        padding: 4px 16px;
+        align-items: start;
+        border-bottom: 1px solid transparent;
+      }
+      .event-row:hover { background: var(--bg-elev-2); }
+      .event-time {
+        color: var(--text-faint);
+        font-size: 10.5px;
+      }
+      .event-type {
+        color: var(--c-translate);
+        font-weight: 600;
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .event-type.message_start { color: var(--c-anthropic); }
+      .event-type.content_block_start { color: var(--c-info); }
+      .event-type.content_block_delta { color: var(--c-gpt55); }
+      .event-type.content_block_stop { color: var(--text-dim); }
+      .event-type.message_delta { color: var(--c-info); }
+      .event-type.message_stop { color: var(--c-anthropic); }
+      .event-type.error { color: var(--c-error); }
+      .event-data {
+        color: var(--text);
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 11px;
+        opacity: 0.85;
+      }
+      .event-tokens {
+        color: var(--text-faint);
+        font-size: 10px;
+        text-align: right;
+      }
+
+      /* ====================================================================
+         STATUS / TELEMETRY BAR
+         ==================================================================== */
+      .telemetry {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 14px 18px;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 24px;
+      }
+      .tel {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .tel-label {
+        font-size: 9.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--text-faint);
+        font-weight: 600;
+      }
+      .tel-val {
+        font-family: var(--font-mono);
+        font-size: 16px;
+        color: var(--text);
+        font-weight: 500;
+        line-height: 1;
+        font-feature-settings: "tnum";
+      }
+      .tel-val.warn { color: var(--c-warn); }
+      .tel-val.ok { color: var(--c-ok); }
+      .tel-val.err { color: var(--c-error); }
+      .tel-val.muted { color: var(--text-faint); }
+      .tel-val .unit {
+        font-size: 10px;
+        color: var(--text-faint);
+        margin-left: 4px;
+        font-weight: 400;
+      }
+
+      /* ====================================================================
+         FOOTER
+         ==================================================================== */
+      .foot {
+        margin-top: 36px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 10.5px;
+        color: var(--text-faint);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
+      .foot a {
+        color: var(--text-dim);
+        text-decoration: none;
+        border-bottom: 1px dotted var(--border-bright);
+        padding-bottom: 1px;
+      }
+      .foot a:hover { color: var(--c-gpt55); border-color: var(--c-gpt55); }
+
+      /* ====================================================================
+         RESPONSIVE
+         ==================================================================== */
+      @media (max-width: 1100px) {
+        .flow {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        .connector {
+          min-height: 60px;
+          flex-direction: row;
+        }
+        .connector-line {
+          top: 50%;
+          left: 0;
+          right: 0;
+          bottom: auto;
+          width: auto;
+          height: 1px;
+          background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+        }
+        .connector-line::before {
+          top: 0;
+          left: 0;
+          width: 30px;
+          height: 1px;
+          animation: flow-right 1.6s ease-in-out infinite;
+        }
+        @keyframes flow-right {
+          0% { transform: translateX(0); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateX(440px); opacity: 0; }
+        }
+        .connector-arrow { margin-top: 0; margin-left: 6px; transform: rotate(90deg); }
+        @keyframes arrow-bob {
+          0%, 100% { transform: rotate(90deg) translateX(0); }
+          50% { transform: rotate(90deg) translateX(3px); }
+        }
+        .lane { min-height: 360px; }
+        .telemetry { grid-template-columns: repeat(3, 1fr); }
+      }
+
+      /* small util */
+      .hidden { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- ============================ TOP BAR ============================ -->
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">flow</div>
+          <div class="brand-tag">translation visualizer</div>
+        </div>
+
+        <div class="config">
+          <div class="config-field">
+            <span class="config-label">Proxy endpoint</span>
+            <input
+              id="endpoint"
+              class="config-input"
+              type="text"
+              value="http://localhost:4141/v1/messages"
+              spellcheck="false"
+            />
+          </div>
+          <div class="config-field" style="max-width:240px">
+            <span class="config-label">Target model</span>
+            <select id="model" class="config-select">
+              <option value="gpt-5.5" selected>gpt-5.5</option>
+              <option value="gpt-5.4">gpt-5.4</option>
+              <option value="gpt-5.3-codex">gpt-5.3-codex</option>
+              <option value="gpt-5.2-codex">gpt-5.2-codex</option>
+              <option value="gpt-4o-2024-11-20">gpt-4o-2024-11-20</option>
+              <option value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</option>
+            </select>
+          </div>
+          <div class="config-field" style="max-width:180px">
+            <span class="config-label">Stream</span>
+            <select id="stream" class="config-select">
+              <option value="true" selected>enabled</option>
+              <option value="false">disabled</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <span id="status-pill" class="status-pill" data-status="idle">
+            <span class="status-dot"></span>
+            <span id="status-text">idle</span>
+          </span>
+          <button id="reset-btn" class="btn btn-ghost" title="Reset to default request">↺ reset</button>
+          <button id="get-token-btn" class="btn btn-ghost" title="Get copilot token for debugging">🔑 token</button>
+          <button id="send-btn" class="btn btn-primary">▶ send</button>
+        </div>
+      </header>
+
+      <!-- ============================ TOKEN MODAL ============================ -->
+      <div id="token-modal" class="token-display hidden">
+        <div class="token-modal">
+          <h3>🔑 Copilot Token</h3>
+          <div id="token-value" class="token-value"></div>
+          <div class="token-actions">
+            <button id="copy-token-btn" class="btn btn-ghost">📋 copy</button>
+            <button id="close-token-btn" class="btn btn-primary">close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================ LEDE ============================ -->
+      <section class="lede">
+        <h1>From Claude to <em>GPT-5.5</em>, and back.</h1>
+        <p>
+          Drop in an Anthropic-format request. <code>flow</code> shows the
+          <span style="color:var(--c-anthropic)">Anthropic</span> payload going in,
+          the <span style="color:var(--c-openai)">OpenAI</span> payload the proxy
+          forwards upstream, and the
+          <span style="color:var(--c-anthropic)">Anthropic</span> response coming
+          back. Streaming events appear live in the panel below.
+        </p>
+      </section>
+
+      <!-- ============================ REQUEST STRIP ============================ -->
+      <div class="request-strip">
+        <div class="presets" id="presets">
+          <button class="chip" data-preset="simple">simple</button>
+          <button class="chip" data-preset="tools">with tools</button>
+          <button class="chip" data-preset="image">with image</button>
+          <button class="chip" data-preset="thinking">thinking</button>
+          <button class="chip" data-preset="alias">claude alias</button>
+        </div>
+        <div class="editor-wrap">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:11px;color:var(--text-dim);font-weight:500;">Request Body (JSON)</span>
+            <span id="editor-info" class="editor-info"></span>
+          </div>
+          <div class="editor-container">
+            <div class="editor-line-numbers" id="line-numbers">1</div>
+            <textarea
+              id="request"
+              class="editor-textarea"
+              spellcheck="false"
+              placeholder='{ "model": "...", "messages": [...] }'
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================ FLOW ============================ -->
+      <section class="flow" id="flow">
+        <!-- Lane 1: Anthropic IN -->
+        <article class="lane" data-protocol="anthropic-in" id="lane-in">
+          <header class="lane-head">
+            <div>
+              <div class="lane-title">
+                <span class="lane-title-dot"></span>
+                Anthropic · in
+              </div>
+              <div class="lane-path">POST /v1/messages</div>
+            </div>
+            <span class="lane-method">client → proxy</span>
+          </header>
+          <div class="lane-body" id="lane-in-body">
+            <div class="empty">awaiting request</div>
+          </div>
+          <footer class="lane-foot">
+            <div class="lane-meta">
+              <span class="lane-meta-item">
+                <span class="lane-meta-key">model</span>
+                <span class="lane-meta-val" id="in-model">—</span>
+              </span>
+              <span class="lane-meta-item">
+                <span class="lane-meta-key">alias</span>
+                <span class="lane-meta-val" id="in-alias">—</span>
+              </span>
+            </div>
+            <button class="copy-btn" data-copy="lane-in-body">copy</button>
+          </footer>
+          <div class="curl-section" id="lane-in-curl">
+            <div class="curl-label">
+              <span>curl</span>
+              <button class="copy-btn copy-curl-btn" data-curl="lane-in-curl">copy</button>
+            </div>
+            <pre class="curl-code" id="lane-in-curl-code"></pre>
+          </div>
+        </article>
+
+        <!-- Connector 1 -->
+        <div class="connector">
+          <div class="connector-line"></div>
+          <div class="connector-label">translate<br />to OpenAI</div>
+          <div class="connector-arrow">▶</div>
+        </div>
+
+        <!-- Lane 2: OpenAI -->
+        <article class="lane" data-protocol="openai" id="lane-mid">
+          <header class="lane-head">
+            <div>
+              <div class="lane-title">
+                <span class="lane-title-dot"></span>
+                OpenAI · upstream
+              </div>
+              <div class="lane-path">POST /v1/chat/completions</div>
+            </div>
+            <span class="lane-method">proxy → gpt-5.5</span>
+          </header>
+          <div class="lane-body" id="lane-mid-body">
+            <div class="empty">translated body will appear here</div>
+          </div>
+          <footer class="lane-foot">
+            <div class="lane-meta">
+              <span class="lane-meta-item">
+                <span class="lane-meta-key">transport</span>
+                <span class="lane-meta-val" id="mid-transport">—</span>
+              </span>
+              <span class="lane-meta-item">
+                <span class="lane-meta-key">initiator</span>
+                <span class="lane-meta-val" id="mid-initiator">—</span>
+              </span>
+            </div>
+            <button class="copy-btn" data-copy="lane-mid-body">copy</button>
+          </footer>
+          <div class="curl-section" id="lane-mid-curl">
+            <div class="curl-label">
+              <span>curl</span>
+              <button class="copy-btn copy-curl-btn" data-curl="lane-mid-curl">copy</button>
+            </div>
+            <pre class="curl-code" id="lane-mid-curl-code"></pre>
+          </div>
+        </article>
+
+        <!-- Connector 2 -->
+        <div class="connector">
+          <div class="connector-line"></div>
+          <div class="connector-label">translate<br />to Anthropic</div>
+          <div class="connector-arrow">▶</div>
+        </div>
+
+        <!-- Lane 3: Anthropic OUT -->
+        <article class="lane" data-protocol="anthropic-out" id="lane-out">
+          <header class="lane-head">
+            <div>
+              <div class="lane-title">
+                <span class="lane-title-dot"></span>
+                Anthropic · out
+              </div>
+              <div class="lane-path">response · proxy → client</div>
+            </div>
+            <span class="lane-method">stop_reason · usage</span>
+          </header>
+          <div class="lane-body" id="lane-out-body">
+            <div class="empty">response will stream here</div>
+          </div>
+          <footer class="lane-foot">
+            <div class="lane-meta">
+              <span class="lane-meta-item">
+                <span class="lane-meta-key">stop</span>
+                <span class="lane-meta-val" id="out-stop">—</span>
+              </span>
+              <span class="lane-meta-item">
+                <span class="lane-meta-key">tokens</span>
+                <span class="lane-meta-val" id="out-tokens">—</span>
+              </span>
+            </div>
+            <button class="copy-btn" data-copy="lane-out-body">copy</button>
+          </footer>
+          <div class="curl-section" id="lane-out-curl">
+            <div class="curl-label">
+              <span>curl (response)</span>
+              <button class="copy-btn copy-curl-btn" data-curl="lane-out-curl">copy</button>
+            </div>
+            <pre class="curl-code" id="lane-out-curl-code"></pre>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============================ EVENTS ============================ -->
+      <section class="events-panel" id="events-panel">
+        <header class="events-head" id="events-head">
+          <div class="events-title">
+            <span>◆</span>
+            <span>SSE event log</span>
+            <span class="events-count" id="events-count">0 events</span>
+          </div>
+          <span class="events-toggle">▾</span>
+        </header>
+        <div class="events-body" id="events-body">
+          <div class="empty" style="padding: 40px 20px;">no events yet</div>
+        </div>
+      </section>
+
+      <!-- ============================ TELEMETRY ============================ -->
+      <section class="telemetry">
+        <div class="tel">
+          <span class="tel-label">status</span>
+          <span class="tel-val muted" id="tel-status">—</span>
+        </div>
+        <div class="tel">
+          <span class="tel-label">latency</span>
+          <span class="tel-val muted" id="tel-latency">—</span>
+        </div>
+        <div class="tel">
+          <span class="tel-label">input tokens</span>
+          <span class="tel-val muted" id="tel-input">—</span>
+        </div>
+        <div class="tel">
+          <span class="tel-label">output tokens</span>
+          <span class="tel-val muted" id="tel-output">—</span>
+        </div>
+        <div class="tel">
+          <span class="tel-label">cache read</span>
+          <span class="tel-val muted" id="tel-cache">—</span>
+        </div>
+        <div class="tel">
+          <span class="tel-label">resolved model</span>
+          <span class="tel-val muted" id="tel-model">—</span>
+        </div>
+      </section>
+
+      <!-- ============================ FOOTER ============================ -->
+      <footer class="foot">
+        <span>flow · copilot-api translation visualizer</span>
+        <span>
+          <a href="./index.html">usage dashboard →</a>
+        </span>
+      </footer>
+    </div>
+
+    <script>
+      // ====================================================================
+      // STATE
+      // ====================================================================
+      const state = {
+        request: null,           // parsed Anthropic request
+        requestRaw: "",          // raw textarea value
+        response: null,          // parsed Anthropic response (or partial)
+        responseRaw: "",         // accumulated response text
+        events: [],              // SSE events
+        startTime: 0,
+        endTime: 0,
+        transport: "copilot",
+        modelUsed: "—",
+        cachedToken: null,       // cached real token for curl display
+      };
+
+      // ====================================================================
+      // PRESETS
+      // ====================================================================
+      const PRESETS = {
+        simple: {
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1024,
+          messages: [
+            { role: "user", content: "Say hello in three languages." },
+          ],
+        },
+        tools: {
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1024,
+          tools: [
+            {
+              name: "get_weather",
+              description: "Get the current weather in a given location.",
+              input_schema: {
+                type: "object",
+                properties: {
+                  location: { type: "string", description: "City name" },
+                  unit: { type: "string", enum: ["celsius", "fahrenheit"] },
+                },
+                required: ["location"],
+              },
+            },
+          ],
+          messages: [
+            { role: "user", content: "What's the weather in Tokyo right now?" },
+          ],
+        },
+        image: {
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 512,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/png",
+                    data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgAAIAAAUAAen63NgAAAAASUVORK5CYII=",
+                  },
+                },
+                { type: "text", text: "What do you see in this image?" },
+              ],
+            },
+          ],
+        },
+        thinking: {
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4096,
+          thinking: { type: "enabled", budget_tokens: 2048 },
+          messages: [
+            {
+              role: "user",
+              content: "If a train leaves at 9am going 60mph and another at 10am going 80mph, when does the second catch up?",
+            },
+          ],
+        },
+        alias: {
+          model: "claude-sonnet-4-20251022",
+          max_tokens: 512,
+          messages: [
+            { role: "user", content: "Resolve my alias to the base model." },
+          ],
+        },
+      };
+
+      // Mirror of the proxy's resolveModelAlias (src/lib/model-routing.ts)
+      // — for the left lane's "alias" indicator.
+      const MODEL_ALIASES = [
+        { match: /^claude-sonnet-4-/, resolve: () => "claude-sonnet-4", notes: "Claude Code subagent ids" },
+        { match: /^claude-opus-4-/,   resolve: () => "claude-opus-4",   notes: "Claude Code subagent ids" },
+      ];
+      function resolveModelAlias(id) {
+        if (!id) return id;
+        for (const r of MODEL_ALIASES) {
+          if (r.match.test(id)) return r.resolve(id);
+        }
+        return id;
+      }
+
+      // Mirror of the proxy's translateToOpenAI for the middle lane.
+      // Visual-only — the actual upstream call is the proxy's.
+      function translateToOpenAI(anthropicPayload, targetModel) {
+        const out = {
+          model: resolveModelAlias(anthropicPayload.model) || targetModel,
+          messages: [],
+          stream: !!anthropicPayload.stream,
+        };
+        if (anthropicPayload.max_tokens) out.max_completion_tokens = anthropicPayload.max_tokens;
+        if (anthropicPayload.temperature !== undefined) out.temperature = anthropicPayload.temperature;
+        if (anthropicPayload.top_p !== undefined) out.top_p = anthropicPayload.top_p;
+        if (anthropicPayload.stop_sequences) out.stop = anthropicPayload.stop_sequences;
+        if (anthropicPayload.user) out.user = anthropicPayload.user;
+        if (anthropicPayload.system) {
+          const sysText = Array.isArray(anthropicPayload.system)
+            ? anthropicPayload.system.map(b => b.text || "").join("\n")
+            : anthropicPayload.system;
+          out.messages.push({ role: "system", content: sysText });
+        }
+        if (anthropicPayload.tools?.length) {
+          out.tools = anthropicPayload.tools.map(t => ({
+            type: "function",
+            function: {
+              name: t.name,
+              description: t.description,
+              parameters: t.input_schema,
+            },
+          }));
+        }
+        if (anthropicPayload.tool_choice) {
+          out.tool_choice =
+            anthropicPayload.tool_choice.type === "tool"
+              ? { type: "function", function: { name: anthropicPayload.tool_choice.name } }
+              : anthropicPayload.tool_choice.type;
+        }
+        for (const m of anthropicPayload.messages || []) {
+          if (Array.isArray(m.content)) {
+            const hasToolUse = m.content.some(b => b.type === "tool_use");
+            const hasToolResult = m.content.some(b => b.type === "tool_result");
+            if (hasToolUse) {
+              const text = m.content.filter(b => b.type === "text").map(b => b.text).join("");
+              const toolCalls = m.content
+                .filter(b => b.type === "tool_use")
+                .map(b => ({
+                  id: b.id,
+                  type: "function",
+                  function: { name: b.name, arguments: JSON.stringify(b.input) },
+                }));
+              out.messages.push({
+                role: "assistant",
+                content: text || null,
+                tool_calls: toolCalls,
+              });
+            } else if (hasToolResult) {
+              for (const b of m.content) {
+                if (b.type === "tool_result") {
+                  const c = typeof b.content === "string"
+                    ? b.content
+                    : Array.isArray(b.content)
+                    ? b.content.map(x => x.text || "").join("")
+                    : "";
+                  out.messages.push({
+                    role: "tool",
+                    tool_call_id: b.tool_use_id,
+                    content: c,
+                  });
+                }
+              }
+            } else {
+              out.messages.push({
+                role: m.role,
+                content: m.content.map(c => {
+                  if (c.type === "image") {
+                    return {
+                      type: "image_url",
+                      image_url: { url: `data:${c.source.media_type};base64,${c.source.data}` },
+                    };
+                  }
+                  if (c.type === "text") return { type: "text", text: c.text };
+                  return { type: "text", text: "" };
+                }),
+              });
+            }
+          } else {
+            out.messages.push({ role: m.role, content: m.content });
+          }
+        }
+        // NOTE: target model is what the user picked in the selector.
+        out.model = targetModel || out.model;
+return out;
+      }
+
+      // ====================================================================
+      // CURL GENERATION
+      // ====================================================================
+      function escapeCurl(s) {
+        return s.replace(/'/g, "'\\''");
+      }
+
+      function buildCurlCommand(method, url, headers, body) {
+        const lines = [];
+        lines.push(`<span class="curl-cmd">curl</span> \\`);
+        lines.push(`  <span class="curl-flag">-X</span> <span class="curl-value">${method}</span> \\`);
+        for (const [key, value] of Object.entries(headers)) {
+          lines.push(`  <span class="curl-flag">-H</span> <span class="curl-header">'${escapeHtml(key)}: ${escapeHtml(value)}'</span> \\`);
+        }
+        if (body) {
+          lines.push(`  <span class="curl-flag">-d</span> <span class="curl-value">'${escapeHtml(body.replace(/'/g, "'\\''"))}'</span> \\`);
+        }
+        lines.push(`  <span class="curl-dim">'${escapeHtml(url)}'</span>`);
+        return lines.join("\n");
+      }
+
+      function renderLaneInCurl() {
+        const curlSection = document.getElementById("lane-in-curl");
+        const curlEl = document.getElementById("lane-in-curl-code");
+        if (!state.request) {
+          curlEl.textContent = "";
+          curlSection.classList.remove("has-data");
+          return;
+        }
+        curlSection.classList.add("has-data");
+        const endpoint = document.getElementById("endpoint").value.replace(/\/$/, "");
+        const url = endpoint.endsWith("/v1/messages") ? endpoint : endpoint + "/v1/messages";
+        const headers = {
+          "content-type": "application/json",
+          "x-api-key": "sk-…",
+          "anthropic-version": "2023-06-01",
+        };
+        const body = JSON.stringify(state.request, null, 2);
+        curlEl.innerHTML = buildCurlCommand("POST", url, headers, body);
+      }
+
+      async function renderLaneMidCurl() {
+        const curlSection = document.getElementById("lane-mid-curl");
+        const curlEl = document.getElementById("lane-mid-curl-code");
+        if (!state.request) {
+          curlEl.textContent = "";
+          curlSection.classList.remove("has-data");
+          return;
+        }
+        curlSection.classList.add("has-data");
+
+        // Fetch real token from server only if not cached
+        if (!state.cachedToken) {
+          try {
+            const endpoint = document.getElementById("endpoint").value.replace(/\/$/, "");
+            const baseUrl = endpoint.includes("/v1/messages")
+              ? endpoint.replace("/v1/messages", "")
+              : endpoint;
+            const resp = await fetch(`${baseUrl}/token`);
+            if (resp.ok) {
+              const data = await resp.json();
+              if (data.token) {
+                state.cachedToken = data.token;
+              }
+            }
+          } catch {}
+        }
+
+        const openai = translateToOpenAI(state.request, document.getElementById("model").value);
+        const copilotUrl = "https://api.githubcopilot.com/chat/completions";
+        const isAgentCall = (state.request.messages || []).some(
+          m => m.role === "assistant" || m.role === "tool"
+        );
+        const token = state.cachedToken || "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+        const headers = {
+          "Authorization": `Bearer ${token}`,
+          "content-type": "application/json",
+          "editor-version": "vscode/1.95.3",
+          "editor-plugin-version": "copilot-chat/0.26.7",
+          "user-agent": "GitHubCopilotChat/0.26.7",
+          "openai-intent": "conversation-panel",
+          "x-github-api-version": "2025-04-01",
+          "x-request-id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+          "x-vscode-user-agent-library-version": "electron-fetch",
+          "x-initiator": isAgentCall ? "agent" : "user",
+        };
+        const body = JSON.stringify(openai, null, 2);
+        curlEl.innerHTML = buildCurlCommand("POST", copilotUrl, headers, body);
+      }
+
+      function renderLaneOutCurl() {
+        const curlSection = document.getElementById("lane-out-curl");
+        const curlEl = document.getElementById("lane-out-curl-code");
+        if (!state.responseRaw) {
+          curlEl.textContent = "";
+          curlSection.classList.remove("has-data");
+          return;
+        }
+        curlSection.classList.add("has-data");
+        // For response, show a sample curl to call the endpoint
+        const endpoint = document.getElementById("endpoint").value.replace(/\/$/, "");
+        const url = endpoint.endsWith("/v1/messages") ? endpoint : endpoint + "/v1/messages";
+        const headers = {
+          "content-type": "application/json",
+          "anthropic-version": "2023-06-01",
+        };
+        const body = JSON.stringify({
+          model: state.modelUsed || "gpt-5.5",
+          messages: [{ role: "user", content: "Hello!" }],
+        }, null, 2);
+        curlEl.innerHTML = buildCurlCommand("POST", url, headers, body);
+      }
+
+      // ====================================================================
+      // JSON SYNTAX HIGHLIGHT (safe, no innerHTML for user data)
+      // ====================================================================
+      function escapeHtml(s) {
+        return s
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+      function updateLineNumbers() {
+        const textarea = document.getElementById("request");
+        const lineNumbers = document.getElementById("line-numbers");
+        const lines = textarea.value.split("\n");
+        lineNumbers.textContent = lines.map((_, i) => i + 1).join("\n");
+      }
+      function highlightJson(value) {
+        const json = JSON.stringify(value, null, 2);
+        if (!json) return "";
+        // Tokenize: strings (with escapes), numbers, booleans, null, punctuation
+        const re = /("(?:\\.|[^"\\])*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|(\btrue\b|\bfalse\b)|(\bnull\b)|([\{\}\[\],])/g;
+        let out = "";
+        let m;
+        while ((m = re.exec(json)) !== null) {
+          const [full, str, colon, num, bool, nul, punct] = m;
+          if (str !== undefined) {
+            if (colon) {
+              out += `<span class="json-key">${escapeHtml(str)}</span><span class="json-punct">${escapeHtml(colon)}</span>`;
+            } else {
+              out += `<span class="json-string">${escapeHtml(str)}</span>`;
+            }
+          } else if (num !== undefined) {
+            out += `<span class="json-number">${escapeHtml(num)}</span>`;
+          } else if (bool !== undefined) {
+            out += `<span class="json-boolean">${escapeHtml(bool)}</span>`;
+          } else if (nul !== undefined) {
+            out += `<span class="json-null">${escapeHtml(nul)}</span>`;
+          } else if (punct !== undefined) {
+            out += `<span class="json-punct">${escapeHtml(punct)}</span>`;
+          } else {
+            out += escapeHtml(full);
+          }
+        }
+        return out;
+      }
+
+      // ====================================================================
+      // RENDER LANES
+      // ====================================================================
+      function renderLaneIn() {
+        const body = document.getElementById("lane-in-body");
+        const modelEl = document.getElementById("in-model");
+        const aliasEl = document.getElementById("in-alias");
+        if (!state.request) {
+          body.innerHTML = '<div class="empty">awaiting request</div>';
+          modelEl.textContent = "—";
+          aliasEl.textContent = "—";
+          return;
+        }
+        const req = state.request;
+        const aliased = resolveModelAlias(req.model);
+        modelEl.textContent = req.model || "—";
+        aliasEl.textContent = aliased === req.model ? "—" : `→ ${aliased}`;
+        // Headers + editable body
+        const headers = [
+          ["content-type", "application/json"],
+          ["x-api-key", "sk-…"],
+          ["anthropic-version", "2023-06-01"],
+        ];
+        const headersHtml = headers
+          .map(([k, v]) => `<div class="kv-row"><span class="kv-key">${escapeHtml(k)}</span><span class="kv-val code">${escapeHtml(v)}</span></div>`)
+          .join("");
+        const bodyHtml = `<div style="margin-top:8px;font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.12em;">body</div><pre style="margin:6px 0 0;font-family:var(--font-mono);font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;">${highlightJson(req)}</pre>`;
+        body.innerHTML = headersHtml + bodyHtml;
+      }
+
+      function renderLaneMid() {
+        const body = document.getElementById("lane-mid-body");
+        const transportEl = document.getElementById("mid-transport");
+        const initiatorEl = document.getElementById("mid-initiator");
+        if (!state.request) {
+          body.innerHTML = '<div class="empty">translated body will appear here</div>';
+          transportEl.textContent = "—";
+          initiatorEl.textContent = "—";
+          return;
+        }
+        const openai = translateToOpenAI(state.request, document.getElementById("model").value);
+        const isAgent = (state.request.messages || []).some(
+          m => m.role === "assistant" || m.role === "tool"
+        );
+        const headers = [
+          ["authorization", "Bearer ghp_…"],
+          ["content-type", "application/json"],
+          ["x-initiator", isAgent ? "agent" : "user"],
+        ];
+        const headersHtml = headers
+          .map(([k, v]) => `<div class="kv-row"><span class="kv-key">${escapeHtml(k)}</span><span class="kv-val code">${escapeHtml(v)}</span></div>`)
+          .join("");
+        const bodyHtml = `<div style="margin-top:8px;font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.12em;">body</div><pre style="margin:6px 0 0;font-family:var(--font-mono);font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;">${highlightJson(openai)}</pre>`;
+        body.innerHTML = headersHtml + bodyHtml;
+        transportEl.textContent = state.transport;
+        initiatorEl.textContent = isAgent ? "agent" : "user";
+      }
+
+      function renderLaneOut() {
+        const body = document.getElementById("lane-out-body");
+        const stopEl = document.getElementById("out-stop");
+        const tokensEl = document.getElementById("out-tokens");
+        if (!state.responseRaw) {
+          body.innerHTML = '<div class="empty">response will stream here</div>';
+          stopEl.textContent = "—";
+          tokensEl.textContent = "—";
+          return;
+        }
+        // Try parse JSON if not streaming
+        try {
+          const obj = JSON.parse(state.responseRaw);
+          stopEl.textContent = obj.stop_reason || "—";
+          const u = obj.usage || {};
+          const tokens = [];
+          if (u.input_tokens !== undefined) tokens.push(`in ${u.input_tokens}`);
+          if (u.output_tokens !== undefined) tokens.push(`out ${u.output_tokens}`);
+          if (u.cache_read_input_tokens !== undefined) tokens.push(`cache ${u.cache_read_input_tokens}`);
+          tokensEl.textContent = tokens.length ? tokens.join(" · ") : "—";
+          body.innerHTML = `<pre style="margin:0;font-family:var(--font-mono);font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;">${highlightJson(obj)}</pre>`;
+        } catch {
+          // streaming partial: show raw + accumulated text content
+          const text = extractStreamedText(state.events);
+          body.innerHTML = `<div style="color:var(--text-faint);font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:6px;">streaming · raw events</div><pre style="margin:0 0 12px;font-family:var(--font-mono);font-size:10.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;">${escapeHtml(state.responseRaw)}</pre><div style="color:var(--text-faint);font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:6px;">accumulated text</div><div style="color:var(--text);font-size:13px;line-height:1.6;white-space:pre-wrap;">${escapeHtml(text || "(no text yet)")}</div>`;
+          stopEl.textContent = state.events.length ? "streaming" : "—";
+          tokensEl.textContent = "—";
+        }
+      }
+
+      function extractStreamedText(events) {
+        let text = "";
+        for (const ev of events) {
+          if (ev.parsed?.type === "content_block_delta" && ev.parsed.delta?.type === "text_delta") {
+            text += ev.parsed.delta.text || "";
+          }
+        }
+        return text;
+      }
+
+      // ====================================================================
+      // SSE EVENT LOG
+      // ====================================================================
+      function renderEvents() {
+        const body = document.getElementById("events-body");
+        const count = document.getElementById("events-count");
+        count.textContent = `${state.events.length} events`;
+        if (state.events.length === 0) {
+          body.innerHTML = '<div class="empty" style="padding: 40px 20px;">no events yet</div>';
+          return;
+        }
+        body.innerHTML = state.events
+          .map((ev, i) => {
+            const t = (ev.t - state.startTime).toFixed(0).padStart(4, " ");
+            const type = ev.parsed?.type || ev.rawType || "—";
+            const data = ev.parsed
+              ? JSON.stringify(ev.parsed).slice(0, 280)
+              : (ev.rawData || "").slice(0, 280);
+            const tokens = ev.parsed?.usage?.output_tokens ?? "";
+            return `<div class="event-row">
+              <span class="event-time">+${t}ms</span>
+              <span class="event-type ${escapeHtml(type)}">${escapeHtml(type)}</span>
+              <span class="event-data">${escapeHtml(data)}</span>
+              <span class="event-tokens">${tokens !== "" ? `Δ ${tokens}` : ""}</span>
+            </div>`;
+          })
+          .join("");
+        body.scrollTop = body.scrollHeight;
+      }
+
+      // ====================================================================
+      // TELEMETRY
+      // ====================================================================
+      function renderTelemetry() {
+        const elStatus = document.getElementById("tel-status");
+        const elLatency = document.getElementById("tel-latency");
+        const elInput = document.getElementById("tel-input");
+        const elOutput = document.getElementById("tel-output");
+        const elCache = document.getElementById("tel-cache");
+        const elModel = document.getElementById("tel-model");
+        const pill = document.getElementById("status-pill");
+        const statusText = document.getElementById("status-text");
+
+        const setStatus = (key, label) => {
+          pill.dataset.status = key;
+          statusText.textContent = label;
+        };
+
+        if (state.startTime && !state.endTime) {
+          setStatus("streaming", "streaming");
+        } else if (state.endTime && state.response) {
+          setStatus("done", "done");
+        } else if (state.endTime) {
+          setStatus("error", "error");
+        } else {
+          setStatus("idle", "idle");
+        }
+
+        if (state.startTime && state.endTime) {
+          const ms = state.endTime - state.startTime;
+          elLatency.innerHTML = `${ms}<span class="unit">ms</span>`;
+          elLatency.className = "tel-val ok";
+        } else if (state.startTime) {
+          elLatency.innerHTML = `<span style="color:var(--c-gpt55)">…</span><span class="unit">live</span>`;
+          elLatency.className = "tel-val";
+        } else {
+          elLatency.textContent = "—";
+          elLatency.className = "tel-val muted";
+        }
+
+        if (state.response?.usage) {
+          const u = state.response.usage;
+          elInput.innerHTML = `${u.input_tokens ?? 0}<span class="unit">tok</span>`;
+          elOutput.innerHTML = `${u.output_tokens ?? 0}<span class="unit">tok</span>`;
+          elCache.innerHTML = `${u.cache_read_input_tokens ?? 0}<span class="unit">hit</span>`;
+          elInput.className = "tel-val";
+          elOutput.className = "tel-val";
+          elCache.className = "tel-val";
+        } else {
+          elInput.className = "tel-val muted";
+          elOutput.className = "tel-val muted";
+          elCache.className = "tel-val muted";
+          elInput.textContent = "—";
+          elOutput.textContent = "—";
+          elCache.textContent = "—";
+        }
+
+        elStatus.textContent = state.response ? "200 ok" : (state.endTime ? "error" : "—");
+        elStatus.className = state.response
+          ? "tel-val ok"
+          : (state.endTime ? "tel-val err" : "tel-val muted");
+        elModel.textContent = state.modelUsed || "—";
+        elModel.className = "tel-val";
+      }
+
+      // ====================================================================
+      // LANE ACTIVE STATE
+      // ====================================================================
+      function setActiveLane(name) {
+        for (const id of ["lane-in", "lane-mid", "lane-out"]) {
+          document.getElementById(id).classList.toggle("active", id === name);
+        }
+      }
+
+      // ====================================================================
+      // SEND
+      // ====================================================================
+      async function send() {
+        const sendBtn = document.getElementById("send-btn");
+        const raw = document.getElementById("request").value.trim();
+        if (!raw) {
+          alert("Empty request body. Click a preset or paste your own.");
+          return;
+        }
+        let parsed;
+        try {
+          parsed = JSON.parse(raw);
+        } catch (e) {
+          alert("Invalid JSON: " + e.message);
+          return;
+        }
+
+        // apply the model from the selector
+        const model = document.getElementById("model").value;
+        const stream = document.getElementById("stream").value === "true";
+        parsed.model = model;
+        parsed.stream = stream;
+        parsed.max_tokens = parsed.max_tokens ?? 1024;
+
+        state.request = parsed;
+        state.requestRaw = JSON.stringify(parsed, null, 2);
+        state.response = null;
+        state.responseRaw = "";
+        state.events = [];
+        state.startTime = 0;
+        state.endTime = 0;
+        state.modelUsed = model;
+
+        renderLaneIn();
+        renderLaneInCurl();
+        renderLaneMid();
+        await renderLaneMidCurl();
+        renderLaneOut();
+        renderLaneOutCurl();
+        renderEvents();
+        renderTelemetry();
+
+        sendBtn.disabled = true;
+        sendBtn.textContent = "▷ sending…";
+
+        setActiveLane("lane-in");
+        await new Promise(r => setTimeout(r, 150));
+        setActiveLane("lane-mid");
+
+        const endpoint = document.getElementById("endpoint").value.replace(/\/$/, "");
+        const url = endpoint.endsWith("/v1/messages")
+          ? endpoint
+          : endpoint + "/v1/messages";
+
+        state.startTime = performance.now();
+        renderTelemetry();
+
+        try {
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-api-key": "dummy",
+              "anthropic-version": "2023-06-01",
+            },
+            body: state.requestRaw,
+          });
+
+          if (!resp.ok) {
+            const errText = await resp.text();
+            state.endTime = performance.now();
+            state.responseRaw = JSON.stringify({ error: errText, status: resp.status }, null, 2);
+            try { state.response = JSON.parse(state.responseRaw); } catch {}
+            renderLaneOut();
+            renderTelemetry();
+            setActiveLane("lane-out");
+            return;
+          }
+
+          if (stream && resp.body) {
+            await readSseStream(resp);
+          } else {
+            const text = await resp.text();
+            state.endTime = performance.now();
+            state.responseRaw = text;
+            try { state.response = JSON.parse(text); } catch {}
+            state.events.push({
+              t: state.endTime,
+              rawType: "message",
+              rawData: text,
+              parsed: state.response,
+            });
+            renderEvents();
+            renderLaneOut();
+            renderTelemetry();
+            setActiveLane("lane-out");
+          }
+        } catch (err) {
+          state.endTime = performance.now();
+          state.responseRaw = JSON.stringify({ error: String(err) }, null, 2);
+          renderLaneOut();
+          renderTelemetry();
+          setActiveLane("lane-out");
+        } finally {
+          sendBtn.disabled = false;
+          sendBtn.textContent = "▶ send";
+        }
+      }
+
+      async function readSseStream(resp) {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          let idx;
+          while ((idx = buf.indexOf("\n\n")) >= 0) {
+            const raw = buf.slice(0, idx);
+            buf = buf.slice(idx + 2);
+            if (!raw.trim()) continue;
+            // parse SSE
+            const lines = raw.split("\n");
+            let eventName = "message";
+            let dataLines = [];
+            for (const line of lines) {
+              if (line.startsWith("event:")) eventName = line.slice(6).trim();
+              else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+            }
+            const dataStr = dataLines.join("\n");
+            let parsed = null;
+            try { parsed = JSON.parse(dataStr); } catch {}
+            const ev = {
+              t: performance.now(),
+              rawType: eventName,
+              rawData: dataStr,
+              parsed,
+            };
+            state.events.push(ev);
+            state.responseRaw += dataStr + "\n\n";
+            renderEvents();
+            if (parsed?.usage) {
+              state.response = {
+                ...(state.response || {}),
+                usage: parsed.usage,
+                stop_reason: parsed.message?.stop_reason || parsed.delta?.stop_reason || state.response?.stop_reason,
+              };
+            }
+            if (parsed?.type === "message_stop" || eventName === "message_stop") {
+              state.endTime = performance.now();
+              state.response = state.response || parsed;
+              renderLaneOut();
+              renderTelemetry();
+              setActiveLane("lane-out");
+              return;
+            }
+          }
+        }
+        if (!state.endTime) {
+          state.endTime = performance.now();
+        }
+        renderLaneOut();
+        renderTelemetry();
+        setActiveLane("lane-out");
+      }
+
+      // ====================================================================
+      // PRESETS UI
+      // ====================================================================
+      function setActiveChip(name) {
+        for (const c of document.querySelectorAll(".chip")) {
+          c.classList.toggle("active", c.dataset.preset === name);
+        }
+      }
+      async function applyPreset(name) {
+        const preset = PRESETS[name];
+        if (!preset) return;
+        const text = JSON.stringify(preset, null, 2);
+        document.getElementById("request").value = text;
+        setActiveChip(name);
+        // Try to parse and pre-render
+        try {
+          state.request = JSON.parse(text);
+          updateLineNumbers();
+          renderLaneIn();
+          renderLaneInCurl();
+          renderLaneMid();
+          await renderLaneMidCurl();
+        } catch {}
+      }
+      async function applyStreamFlag() {
+        const stream = document.getElementById("stream").value === "true";
+        try {
+          const cur = JSON.parse(document.getElementById("request").value);
+          cur.stream = stream;
+          document.getElementById("request").value = JSON.stringify(cur, null, 2);
+          state.request = cur;
+          renderLaneIn();
+          renderLaneInCurl();
+          renderLaneMid();
+          await renderLaneMidCurl();
+        } catch {}
+      }
+
+      // ====================================================================
+      // COPY BUTTONS
+      // ====================================================================
+      function attachCopyButtons() {
+        // Regular copy buttons (for lane bodies)
+        for (const btn of document.querySelectorAll(".copy-btn:not(.copy-curl-btn)")) {
+          btn.addEventListener("click", () => {
+            const target = document.getElementById(btn.dataset.copy);
+            const text = target.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+              btn.classList.add("copied");
+              const orig = btn.textContent;
+              btn.textContent = "✓ copied";
+              setTimeout(() => {
+                btn.classList.remove("copied");
+                btn.textContent = orig;
+              }, 1200);
+            });
+          });
+        }
+        // curl copy buttons
+        for (const btn of document.querySelectorAll(".copy-curl-btn")) {
+          btn.addEventListener("click", () => {
+            const curlSection = document.getElementById(btn.dataset.curl);
+            const curlCode = curlSection.querySelector(".curl-code");
+            // Get raw text without HTML span tags
+            const temp = document.createElement("div");
+            temp.innerHTML = curlCode.innerHTML;
+            const text = temp.textContent || temp.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+              btn.classList.add("copied");
+              btn.textContent = "✓ copied";
+              setTimeout(() => {
+                btn.classList.remove("copied");
+                btn.textContent = "copy";
+              }, 1200);
+            });
+          });
+        }
+      }
+
+      // ====================================================================
+      // EVENTS PANEL TOGGLE
+      // ====================================================================
+      function attachEventsToggle() {
+        const head = document.getElementById("events-head");
+        const panel = document.getElementById("events-panel");
+        head.addEventListener("click", () => panel.classList.toggle("collapsed"));
+      }
+
+      // ====================================================================
+      // INIT
+      // ====================================================================
+      function init() {
+        // Wire presets
+        for (const chip of document.querySelectorAll(".chip")) {
+          chip.addEventListener("click", () => applyPreset(chip.dataset.preset));
+        }
+        // Wire send
+        document.getElementById("send-btn").addEventListener("click", send);
+        document.getElementById("reset-btn").addEventListener("click", () => {
+          applyPreset("simple");
+        });
+        // Wire token
+        document.getElementById("get-token-btn").addEventListener("click", async () => {
+          const endpoint = document.getElementById("endpoint").value.replace(/\/$/, "");
+          const baseUrl = endpoint.includes("/v1/messages")
+            ? endpoint.replace("/v1/messages", "")
+            : endpoint;
+          try {
+            const resp = await fetch(`${baseUrl}/token`);
+            if (resp.ok) {
+              const data = await resp.json();
+              document.getElementById("token-value").textContent = data.token || "No token found";
+            } else {
+              document.getElementById("token-value").textContent = `Error: ${resp.status} ${resp.statusText}`;
+            }
+          } catch (e) {
+            document.getElementById("token-value").textContent = `Error: ${e.message}`;
+          }
+          document.getElementById("token-modal").classList.remove("hidden");
+        });
+        document.getElementById("copy-token-btn").addEventListener("click", () => {
+          const token = document.getElementById("token-value").textContent;
+          navigator.clipboard.writeText(token);
+          document.getElementById("copy-token-btn").textContent = "✓ copied";
+          setTimeout(() => {
+            document.getElementById("copy-token-btn").textContent = "📋 copy";
+          }, 1200);
+        });
+        document.getElementById("close-token-btn").addEventListener("click", () => {
+          document.getElementById("token-modal").classList.add("hidden");
+        });
+        document.getElementById("token-modal").addEventListener("click", (e) => {
+          if (e.target.id === "token-modal") {
+            document.getElementById("token-modal").classList.add("hidden");
+          }
+        });
+        // Live-edit request
+        document.getElementById("request").addEventListener("input", async (e) => {
+          updateLineNumbers();
+          const infoEl = document.getElementById("editor-info");
+          try {
+            state.request = JSON.parse(e.target.value);
+            infoEl.textContent = "✓ valid JSON";
+            infoEl.className = "editor-info ok";
+            renderLaneIn();
+            renderLaneInCurl();
+            renderLaneMid();
+            await renderLaneMidCurl();
+          } catch (err) {
+            infoEl.textContent = `✗ ${err.message}`;
+            infoEl.className = "editor-info error";
+          }
+        });
+        // Sync scroll between textarea and line numbers
+        document.getElementById("request").addEventListener("scroll", (e) => {
+          document.getElementById("line-numbers").scrollTop = e.target.scrollTop;
+        });
+        document.getElementById("stream").addEventListener("change", applyStreamFlag);
+        document.getElementById("model").addEventListener("change", async () => {
+          if (state.request) {
+            state.request.model = document.getElementById("model").value;
+            renderLaneIn();
+            renderLaneInCurl();
+            renderLaneMid();
+            await renderLaneMidCurl();
+          }
+        });
+        attachCopyButtons();
+        attachEventsToggle();
+        // Initial state
+        applyPreset("simple");
+        updateLineNumbers();
+        renderTelemetry();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    </script>
+  </body>
+</html>

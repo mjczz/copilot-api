@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,81 +17,147 @@
     <script src="https://unpkg.com/lucide-react@0.378.0/dist/umd/lucide.min.js"></script>
 
     <style>
-      /* Gruvbox-themed color palette */
+      /* GitHub Light Theme */
       :root {
-        /* Main Color Palette */
-        --color-red: #cc241d;
-        --color-green: #98971a;
-        --color-yellow: #d79921;
-        --color-blue: #458588;
-        --color-purple: #b16286;
-        --color-aqua: #689d6a;
-        --color-orange: #d65d0e;
-        --color-gray: #a89984;
-
-        /* Accent/Lighter/Darker Shades of Main Colors */
-        --color-red-accent: #fb4934;
-        --color-green-accent: #b8bb26;
-        --color-yellow-accent: #fabd2f;
-        --color-blue-accent: #83a598;
-        --color-purple-accent: #d3869b;
-        --color-aqua-accent: #8ec07c;
-        --color-orange-accent: #fe8019;
-        --color-gray-accent: #928374;
-
-        /* Background Colors */
-        --color-bg-darkest: #1d2021; /* bg0_h */
-        --color-bg: #282828; /* bg and bg0 */
-        --color-bg-light-1: #3c3836; /* bg1 */
-        --color-bg-light-2: #504945; /* bg2 */
-        --color-bg-light-3: #665c54; /* bg3 */
-        --color-bg-light-4: #7c6f64; /* bg4 */
-        --color-bg-soft: #32302f; /* bg0_s */
-
-        /* Foreground Colors */
-        --color-fg-darker: #a89984; /* fg4 - duplicate of gray */
-        --color-fg-dark: #bdae93; /* fg3 */
-        --color-fg-medium: #d5c4a1; /* fg2 */
-        --color-fg-light: #ebdbb2; /* fg and fg1 */
-        --color-fg-lightest: #fbf1c7; /* fg0 */
+        --color-bg: #ffffff;
+        --color-bg-elev: #f6f8fa;
+        --color-bg-elev-2: #eaeef2;
+        --color-bg-elev-3: #d0d7de;
+        --color-border: #d0d7de;
+        --color-border-bright: #afb8c1;
+        --color-text: #24292f;
+        --color-text-dim: #57606a;
+        --color-text-faint: #8c959f;
+        --color-blue: #0969da;
+        --color-blue-accent: #58a6ff;
+        --color-green: #1a7f37;
+        --color-green-accent: #2da44e;
+        --color-purple: #8250df;
+        --color-red: #cf222e;
+        --color-red-accent: #f85149;
+        --color-yellow: #9a6700;
+        --color-orange: #bc4c00;
       }
 
-      /* Custom styles using the new palette */
       body {
-        font-family: "Inter", sans-serif;
-        background-color: var(--color-bg-darkest);
-        color: var(--color-fg-light);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        background-color: var(--color-bg);
+        color: var(--color-text);
       }
 
-      /* Custom progress bar styles */
       .progress-bar-bg {
-        background-color: var(--color-bg-light-1);
+        background-color: var(--color-bg-elev-2);
       }
       .progress-bar-fg {
         transition: width 0.5s ease-in-out;
       }
 
-      /* Custom scrollbar for the raw data view */
       .code-block::-webkit-scrollbar {
         width: 8px;
         height: 8px;
       }
       .code-block::-webkit-scrollbar-track {
-        background: var(--color-bg);
+        background: var(--color-bg-elev);
       }
       .code-block::-webkit-scrollbar-thumb {
-        background: var(--color-bg-light-3);
-      }
-      .code-block::-webkit-scrollbar-thumb:hover {
-        background: var(--color-bg-light-4);
+        background: var(--color-bg-elev-3);
+        border-radius: 4px;
       }
 
-      /* Style for focus rings to use variables */
       .input-focus:focus {
         --tw-ring-color: var(--color-blue);
         border-color: var(--color-blue);
       }
 
+      .preset-button {
+        font-weight: 500;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        background-color: var(--color-bg-elev);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        transition: background-color 0.15s, border-color 0.15s;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .preset-button:hover {
+        background-color: var(--color-bg-elev-2);
+        border-color: var(--color-border-bright);
+      }
+      .preset-button.active {
+        background-color: var(--color-blue);
+        color: #fff;
+        border-color: var(--color-blue);
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+      .badge-copilot {
+        background: var(--color-bg-elev-2);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+      }
+      .badge-openai {
+        background: #fff;
+        color: var(--color-purple);
+        border: 1px solid var(--color-purple);
+      }
+      .badge-proxy {
+        background: var(--color-bg-elev);
+        color: var(--color-text-dim);
+        border: 1px solid var(--color-border);
+      }
+      .badge-preview {
+        background: #fff8c5;
+        color: var(--color-yellow);
+        border: 1px solid #d4a72c;
+      }
+
+      .model-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+      }
+      .model-table th {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        border-bottom: 2px solid var(--color-border);
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--color-text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .model-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--color-border);
+        font-size: 0.875rem;
+        vertical-align: top;
+      }
+      .model-table tr:hover {
+        background: var(--color-bg-elev);
+      }
+      .model-table .mono {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 0.8rem;
+      }
+      .model-table details > summary {
+        cursor: pointer;
+        color: var(--color-blue);
+        font-size: 0.75rem;
+      }
+
+      .card {
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+      }
 
     </style>
   </head>
@@ -99,44 +165,51 @@
     <div id="app" class="min-h-screen p-4 sm:p-6">
       <div class="max-w-7xl mx-auto">
         <!-- Header Section -->
-        <header class="mb-6">
-          <h1
-            class="text-2xl font-bold flex items-center gap-2"
-            style="color: var(--color-fg-lightest)"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-gauge-circle h-7 w-7"
-              style="color: var(--color-aqua-accent)"
+        <header class="mb-6 flex items-start justify-between">
+          <div>
+            <h1
+              class="text-2xl font-bold flex items-center gap-2"
+              style="color: var(--color-text)"
             >
-              <path d="M15.6 3.3a10 10 0 1 0 5.1 5.1" />
-              <path
-                d="M12 12a1 1 0 0 0-1-1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-3z"
-              />
-              <path d="M12 6.8a10 10 0 0 0 -3.2 7.2" />
-            </svg>
-            <span>Copilot API Usage Dashboard</span>
-          </h1>
-          <p class="mt-1 text-sm" style="color: var(--color-gray)">
-            Should be the same as the one in VSCode
-          </p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-6 w-6"
+                style="color: var(--color-blue)"
+              >
+                <path d="M15.6 3.3a10 10 0 1 0 5.1 5.1" />
+                <path
+                  d="M12 12a1 1 0 0 0-1-1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-3z"
+                />
+                <path d="M12 6.8a10 10 0 0 0 -3.2 7.2" />
+              </svg>
+              <span>Copilot API Usage Dashboard</span>
+            </h1>
+            <p class="mt-1 text-sm" style="color: var(--color-text-dim)">
+              Monitor your Copilot API usage and model availability
+            </p>
+          </div>
+          <a
+            href="flow.html"
+            class="preset-button flex items-center gap-1"
+            style="text-decoration: none;"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            Flow
+          </a>
         </header>
 
         <!-- Form Section -->
         <div
-          class="mb-6 p-4 border"
-          style="
-            background-color: var(--color-bg-soft);
-            border-color: var(--color-bg-light-2);
-          "
+          class="mb-6 p-4 border rounded-lg"
+          style="background-color: var(--color-bg-elev); border-color: var(--color-border);"
         >
           <form
             id="endpoint-form"
@@ -145,28 +218,47 @@
             <label
               for="endpoint-url"
               class="font-semibold whitespace-nowrap text-sm"
-              style="color: var(--color-fg-lightest)"
-              >API Endpoint URL</label
+              style="color: var(--color-text)"
+              >API Endpoint</label
             >
             <input
               type="text"
               id="endpoint-url"
-              class="w-full px-3 py-1.5 border focus:ring-1 transition input-focus text-sm"
-              style="
-                background-color: var(--color-bg-darkest);
-                border-color: var(--color-bg-light-3);
-                color: var(--color-fg-medium);
-              "
+              class="w-full px-3 py-1.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+              style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
               placeholder="http://localhost:4141/usage"
             />
+            <div class="flex gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                class="preset-button"
+                data-preset="usage"
+                title="Fetch usage quotas from /usage"
+              >
+                Usage
+              </button>
+              <button
+                type="button"
+                class="preset-button"
+                data-preset="models"
+                title="Fetch the full model catalog from /v1/models:full"
+              >
+                Models
+              </button>
+              <button
+                type="button"
+                class="preset-button"
+                data-preset="aliases"
+                title="Fetch model alias rules from /v1/model-aliases"
+              >
+                Aliases
+              </button>
+            </div>
             <button
               id="fetch-button"
               type="submit"
-              class="w-full sm:w-auto font-bold py-1.5 px-5 transition-colors flex items-center justify-center gap-2 text-sm"
-              style="
-                background-color: var(--color-blue);
-                color: var(--color-bg-darkest);
-              "
+              class="w-full sm:w-auto font-bold py-1.5 px-5 transition-colors flex items-center justify-center gap-2 text-sm rounded-md"
+              style="background-color: var(--color-blue); color: #fff;"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -241,7 +333,16 @@
           if (state.error) {
             contentArea.innerHTML = renderError(state.error);
           } else if (state.data) {
+            // Pick a specialised view for non-usage payloads, otherwise fall
+            // through to the existing quota / detailed tree rendering.
+            let extraSection = "";
+            if (isModelsResponse(state.data)) {
+              extraSection = renderModelsSection(state.data.data);
+            } else if (isAliasesResponse(state.data)) {
+              extraSection = renderAliasesSection(state.data.rules);
+            }
             contentArea.innerHTML = `
+                        ${extraSection}
                         ${renderUsageQuotas(state.data.quota_snapshots)}
                         ${renderDetailedData(state.data)}
                     `;
@@ -299,21 +400,21 @@
           if (unlimited) progressBarColor = "var(--color-blue)";
 
           return `
-                    <div class="p-4 border" style="background-color: var(--color-bg); border-color: var(--color-bg-light-2);">
+                    <div class="card p-4">
                         <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-md font-semibold capitalize" style="color: var(--color-fg-lightest);">${title.replace(/_/g, " ")}</h3>
+                            <h3 class="text-md font-semibold capitalize" style="color: var(--color-text);">${title.replace(/_/g, " ")}</h3>
                             ${
                               unlimited
-                                ? `<span class="px-2 py-0.5 text-xs font-medium" style="color: var(--color-blue-accent); background-color: var(--color-bg-light-1);">Unlimited</span>`
-                                : `<span class="text-sm font-mono" style="color: var(--color-fg-medium);">${percentUsed.toFixed(1)}% Used</span>`
+                                ? `<span class="px-2 py-0.5 text-xs font-medium rounded-full" style="color: var(--color-blue); background-color: #ddf4ff;">Unlimited</span>`
+                                : `<span class="text-sm font-mono" style="color: var(--color-text-dim);">${percentUsed.toFixed(1)}% Used</span>`
                             }
                         </div>
                         <div class="mb-3">
-                             <div class="w-full progress-bar-bg h-2">
-                                 <div class="progress-bar-fg h-2" style="width: ${unlimited ? 100 : percentUsed}%; background-color: ${progressBarColor};"></div>
+                             <div class="w-full progress-bar-bg h-2 rounded-full">
+                                 <div class="progress-bar-fg h-2 rounded-full" style="width: ${unlimited ? 100 : percentUsed}%; background-color: ${progressBarColor};"></div>
                              </div>
                         </div>
-                        <div class="flex justify-between text-xs font-mono" style="color: var(--color-fg-dark);">
+                        <div class="flex justify-between text-xs font-mono" style="color: var(--color-text-dim);">
                             <span>${used} / ${unlimited ? "∞" : entitlement.toLocaleString()}</span>
                             <span>${unlimited ? "∞" : remaining.toLocaleString()} remaining</span>
                         </div>
@@ -328,7 +429,7 @@
          */
         function formatObject(obj) {
           if (obj === null || typeof obj !== "object") {
-            return `<span style="color: var(--color-green-accent);">${JSON.stringify(obj)}</span>`;
+            return `<span style="color: var(--color-green);">${JSON.stringify(obj)}</span>`;
           }
 
           return (
@@ -341,18 +442,18 @@
                 if (Array.isArray(value)) {
                   displayValue =
                     value.length > 0
-                      ? `<span style='color: var(--color-gray-accent)'>[...${value.length} items]</span>`
-                      : `<span style='color: var(--color-gray-accent)'>[]</span>`;
+                      ? `<span style='color: var(--color-text-faint)'>[...${value.length} items]</span>`
+                      : `<span style='color: var(--color-text-faint)'>[]</span>`;
                 } else if (typeof value === "object" && value !== null) {
                   displayValue = formatObject(value);
                 } else if (typeof value === "boolean") {
-                  displayValue = `<span class="font-semibold" style="color: ${value ? "var(--color-green-accent)" : "var(--color-red-accent)"}">${value}</span>`;
+                  displayValue = `<span class="font-semibold" style="color: ${value ? "var(--color-green)" : "var(--color-red)"}">${value}</span>`;
                 } else {
-                  displayValue = `<span style="color: var(--color-blue-accent);">${JSON.stringify(value)}</span>`;
+                  displayValue = `<span style="color: var(--color-blue);">${JSON.stringify(value)}</span>`;
                 }
 
                 return `<div class="mt-1">
-                                <span class="capitalize font-semibold" style="color: var(--color-fg-medium);">${formattedKey}:</span>
+                                <span class="capitalize font-semibold" style="color: var(--color-text-dim);">${formattedKey}:</span>
                                 ${typeof value === "object" && value !== null && !Array.isArray(value) ? displayValue : ` ${displayValue}`}
                            </div>`;
               })
@@ -370,10 +471,10 @@
           const formattedDetails = formatObject(data);
           return `
                     <section id="detailed-data">
-                        <h2 class="text-xl font-bold mb-3 flex items-center gap-2" style="color: var(--color-fg-lightest);">
+                        <h2 class="text-xl font-bold mb-3 flex items-center gap-2" style="color: var(--color-text);">
                            <i data-lucide="file-text"></i> Detailed Information
                         </h2>
-                        <div class="border p-4 relative font-mono text-xs" style="background-color: var(--color-bg-darkest); border-color: var(--color-bg-light-2);">
+                        <div class="card p-4 font-mono text-xs" style="background-color: var(--color-bg);">
                             ${formattedDetails}
                         </div>
                     </section>
@@ -398,10 +499,10 @@
          */
         function renderError(message) {
           const container = document.createElement("div");
-          container.className = "p-3 border";
-          container.style.backgroundColor = "rgba(204, 36, 29, 0.2)";
+          container.className = "p-4 border rounded-lg";
+          container.style.backgroundColor = "#ffebe9";
           container.style.borderColor = "var(--color-red)";
-          container.style.color = "var(--color-red-accent)";
+          container.style.color = "var(--color-red)";
           container.setAttribute("role", "alert");
 
           container.innerHTML = `
@@ -430,10 +531,10 @@
          */
         function renderWelcomeMessage() {
           return `
-            <div class="text-center py-16 px-4 border" style="background-color: var(--color-bg-soft); border-color: var(--color-bg-light-2);">
-                <i data-lucide="info" class="mx-auto h-10 w-10" style="color: var(--color-gray-accent);"></i>
-                <h3 class="mt-2 text-lg font-semibold" style="color: var(--color-fg-lightest);">Welcome!</h3>
-                <p class="mt-1 text-sm" style="color: var(--color-gray);">Enter an API endpoint URL and click "Fetch" to see usage data.</p>
+            <div class="text-center py-16 px-4 border rounded-lg" style="background-color: var(--color-bg-elev); border-color: var(--color-border);">
+                <i data-lucide="info" class="mx-auto h-10 w-10" style="color: var(--color-text-faint);"></i>
+                <h3 class="mt-2 text-lg font-semibold" style="color: var(--color-text);">Welcome!</h3>
+                <p class="mt-1 text-sm" style="color: var(--color-text-dim);">Select Usage, Models, or Aliases to view API data.</p>
             </div>
           `;
         }
@@ -514,6 +615,255 @@
             endpointUrlInput.value = DEFAULT_ENDPOINT;
             render(); // Render initial welcome message
           }
+
+          // Bind preset buttons
+          document.querySelectorAll(".preset-button").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const kind = btn.dataset.preset;
+              setPreset(kind);
+            });
+          });
+        }
+
+        // --- Models / Aliases specialised views ---
+
+        /**
+         * Detects a `/v1/models:full` style response.
+         * @param {any} data
+         * @returns {boolean}
+         */
+        function isModelsResponse(data) {
+          return Boolean(data && data.data && Array.isArray(data.data) && data.data[0] && data.data[0].capabilities);
+        }
+
+        /**
+         * Detects a `/v1/model-aliases` style response.
+         * @param {any} data
+         * @returns {boolean}
+         */
+        function isAliasesResponse(data) {
+          return Boolean(data && Array.isArray(data.rules));
+        }
+
+        /**
+         * Format a token count with k/M suffix. Returns "—" for null/undefined.
+         * @param {number|null|undefined} n
+         * @returns {string}
+         */
+        function formatTokens(n) {
+          if (n == null) return "—";
+          if (n >= 1_000_000) {
+            const v = n / 1_000_000;
+            return (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, "")) + "M";
+          }
+          if (n >= 1_000) {
+            return Math.round(n / 1_000) + "k";
+          }
+          return String(n);
+        }
+
+        /**
+         * Pick the right CSS class for a transport value.
+         * @param {string|undefined} transport
+         * @returns {string}
+         */
+        function transportBadgeClass(transport) {
+          if (transport === "openai_native") return "badge badge-openai";
+          if (transport === "openai_compatible_proxy") return "badge badge-proxy";
+          return "badge badge-copilot";
+        }
+
+        /**
+         * Render a single model row.
+         * @param {object} model
+         * @returns {string}
+         */
+        function renderModelRow(model) {
+          const caps = model.capabilities || {};
+          const limits = caps.limits || {};
+          const supports = caps.supports || {};
+          const aliases = Array.isArray(model.aliases) ? model.aliases : [];
+          const transport = model.transport || "copilot";
+          const tools = supports.tool_calls ? "✓" : "✗";
+          const toolsClass = supports.tool_calls
+            ? "style=\"color: var(--color-green-accent);\""
+            : "style=\"color: var(--color-red-accent);\"";
+          const previewCell = model.preview === true
+            ? '<span class="badge badge-preview">preview</span>'
+            : "—";
+          const aliasesCell = aliases.length > 0
+            ? aliases.map((a) => `<span class="mono">→ ${escapeHtml(String(a))}</span>`).join(", ")
+            : '<span style="color: var(--color-gray-accent);">—</span>';
+
+          return `
+                        <tr>
+                            <td class="mono">${escapeHtml(model.id || "")}</td>
+                            <td>${escapeHtml(model.display_name || model.name || "")}</td>
+                            <td>${escapeHtml(model.vendor || "")}</td>
+                            <td>${escapeHtml(caps.family || "—")}</td>
+                            <td class="mono">${formatTokens(limits.max_context_window_tokens)}</td>
+                            <td class="mono">${formatTokens(limits.max_output_tokens)}</td>
+                            <td ${toolsClass}>${tools}</td>
+                            <td><span class="${transportBadgeClass(transport)}">${escapeHtml(transport)}</span></td>
+                            <td>${aliasesCell}</td>
+                            <td>${previewCell}</td>
+                            <td class="mono">POST /v1/chat/completions</td>
+                        </tr>
+                    `;
+        }
+
+        /**
+         * Renders the models browser table.
+         * @param {Array<object>} models
+         * @returns {string}
+         */
+        function renderModelsSection(models) {
+          if (!Array.isArray(models) || models.length === 0) {
+            return `
+                        <section id="models-browser" class="mb-6">
+                            <h2 class="text-xl font-bold mb-3 flex items-center gap-2" style="color: var(--color-text);">
+                                <i data-lucide="boxes"></i> Models
+                            </h2>
+                            <p class="text-sm" style="color: var(--color-text-dim);">No models in response.</p>
+                        </section>
+                    `;
+          }
+
+          const rows = models.map(renderModelRow).join("");
+
+          return `
+                    <section id="models-browser" class="mb-6">
+                        <h2 class="text-xl font-bold mb-3 flex items-center gap-2" style="color: var(--color-text);">
+                            <i data-lucide="boxes"></i> Models
+                            <span class="text-sm font-normal" style="color: var(--color-text-dim);">(${models.length})</span>
+                        </h2>
+                        <div class="card overflow-x-auto">
+                            <table class="model-table">
+                                <thead>
+                                    <tr>
+                                        <th>id</th>
+                                        <th>display name</th>
+                                        <th>vendor</th>
+                                        <th>family</th>
+                                        <th>context</th>
+                                        <th>max output</th>
+                                        <th>tools</th>
+                                        <th>transport</th>
+                                        <th>aliases</th>
+                                        <th>preview</th>
+                                        <th>endpoint</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </section>
+                `;
+        }
+
+        /**
+         * Renders the alias rules table.
+         * @param {Array<object>} rules
+         * @returns {string}
+         */
+        function renderAliasesSection(rules) {
+          if (!Array.isArray(rules) || rules.length === 0) {
+            return `
+                        <section id="aliases-viewer" class="mb-6">
+                            <h2 class="text-xl font-bold mb-3 flex items-center gap-2" style="color: var(--color-text);">
+                                <i data-lucide="arrow-right-left"></i> Model Aliases
+                            </h2>
+                            <p class="text-sm" style="color: var(--color-text-dim);">No alias rules in response.</p>
+                        </section>
+                    `;
+          }
+
+          const rows = rules
+            .map((rule) => {
+              const pattern = rule && (rule.pattern ?? rule.match ?? "");
+              const resolvesTo = rule && (rule.resolvesTo ?? rule.target ?? rule.to ?? "");
+              const notes = rule && (rule.notes ?? rule.comment ?? rule.reason ?? "");
+              return `
+                            <tr>
+                                <td class="mono">${escapeHtml(String(pattern))}</td>
+                                <td class="mono">${escapeHtml(String(resolvesTo))}</td>
+                                <td>${escapeHtml(String(notes || "")) || '<span style="color: var(--color-text-faint);">—</span>'}</td>
+                            </tr>
+                        `;
+            })
+            .join("");
+
+          return `
+                    <section id="aliases-viewer" class="mb-6">
+                        <h2 class="text-xl font-bold mb-3 flex items-center gap-2" style="color: var(--color-text);">
+                            <i data-lucide="arrow-right-left"></i> Model Aliases
+                            <span class="text-sm font-normal" style="color: var(--color-text-dim);">(${rules.length})</span>
+                        </h2>
+                        <div class="card overflow-x-auto">
+                            <table class="model-table">
+                                <thead>
+                                    <tr>
+                                        <th>pattern</th>
+                                        <th>resolves to</th>
+                                        <th>notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </section>
+                `;
+        }
+
+        /**
+         * Minimal HTML-escape helper for any string inserted via template literals.
+         * @param {string} s
+         * @returns {string}
+         */
+        function escapeHtml(s) {
+          if (s == null) return "";
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        /**
+         * Updates the endpoint input + refetches for a preset.
+         * @param {"usage"|"models"|"aliases"} kind
+         */
+        function setPreset(kind) {
+          let path;
+          if (kind === "models") path = "/v1/models:full";
+          else if (kind === "aliases") path = "/v1/model-aliases";
+          else path = "/usage";
+
+          // Reuse the current endpoint's origin so it works for non-default hosts;
+          // fall back to the page origin (handy when the dashboard is hosted
+          // on GitHub Pages but the API runs locally).
+          let base;
+          try {
+            base = new URL(endpointUrlInput.value.trim() || DEFAULT_ENDPOINT).origin;
+          } catch {
+            base = window.location.origin;
+          }
+          endpointUrlInput.value = base + path;
+          // Update the URL query param so the selection is shareable, like the
+          // existing form submit handler does.
+          try {
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set("endpoint", endpointUrlInput.value);
+            window.history.pushState({}, "", currentUrl);
+          } catch (e) {
+            /* ignore */
+          }
+          // Reflect the active preset visually
+          document.querySelectorAll(".preset-button").forEach((b) => {
+            b.classList.toggle("active", b.dataset.preset === kind);
+          });
+          fetchData();
         }
 
         // Start the app
@@ -522,31 +872,17 @@
     </script>
 
     <footer
-      class="text-center py-4 text-xs"
-      style="color: var(--color-gray-accent)"
+      class="text-center py-4 text-xs border-t mt-8"
+      style="color: var(--color-text-faint); border-color: var(--color-border);"
     >
       <p>
-        Vibe coded by
-        <a
-          href="https://gemini.google.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="underline transition-colors"
-          style="color: var(--color-fg-dark)"
-          onmouseover="this.style.color='var(--color-fg-light)'"
-          onmouseout="this.style.color='var(--color-fg-dark)'"
-        >
-          Gemini
-        </a>
-        - Based on
+        Based on
         <a
           href="https://github.com/uheej0625/copilot-usage-viewer"
           target="_blank"
           rel="noopener noreferrer"
-          class="underline transition-colors"
-          style="color: var(--color-fg-dark)"
-          onmouseover="this.style.color='var(--color-fg-light)'"
-          onmouseout="this.style.color='var(--color-fg-dark)'"
+          class="underline"
+          style="color: var(--color-blue);"
         >
           copilot-usage-viewer</a
         >
