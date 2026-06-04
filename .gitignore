@@ -13,3 +13,6 @@ node_modules/
 # build output
 dist/
 .idea
+
+# macOS
+.DS_Store
