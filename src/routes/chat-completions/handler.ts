@@ -1,4 +1,5 @@
 import type { Context } from "hono"
+import type { ContentfulStatusCode } from "hono/utils/http-status"
 
 import consola from "consola"
 import { streamSSE, type SSEMessage } from "hono/streaming"
@@ -117,7 +118,10 @@ function handleDispatchError(c: Context, err: unknown) {
         typeof errorObj.message === "string" ? errorObj.message : err.message
       const code =
         typeof errorObj.code === "string" ? errorObj.code : "server_error"
-      return c.json({ error: { message: msg, code } }, resp.status)
+      return c.json(
+        { error: { message: msg, code } },
+        resp.status as ContentfulStatusCode,
+      )
     })
   }
   throw err

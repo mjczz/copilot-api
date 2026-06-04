@@ -41,7 +41,7 @@ export function translateToOpenAI(
     stream: payload.stream,
     temperature: payload.temperature,
     top_p: payload.top_p,
-    user: payload.metadata?.user_id,
+    user: truncateUserId(payload.metadata?.user_id),
     tools: translateAnthropicToolsToOpenAI(payload.tools),
     tool_choice: translateAnthropicToolChoiceToOpenAI(payload.tool_choice),
   }
@@ -345,4 +345,12 @@ function getAnthropicToolUseBlocks(
     name: toolCall.function.name,
     input: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
   }))
+}
+
+// Upstream APIs (e.g. OpenAI-compatible) cap the `user` field at 64 chars.
+// Claude Code sends a longer hashed user_id, so we truncate to stay within
+// the limit while preserving enough entropy for upstream rate-limit buckets.
+function truncateUserId(userId: string | undefined): string | undefined {
+  if (!userId) return undefined
+  return userId.length > 64 ? userId.slice(0, 64) : userId
 }

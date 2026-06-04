@@ -1,5 +1,7 @@
 import type {
+  ResponseInputContent,
   ResponseInputItem,
+  ResponseOutputContent,
   ResponsesPayload,
   ResponsesResponse,
 } from "~/services/transport/responses-types"
@@ -32,14 +34,36 @@ export function translateToResponses(
 
   for (const message of payload.messages) {
     if (typeof message.content === "string") {
-      input.push({
-        role: message.role,
-        content: [{ type: "input_text", text: message.content }],
-      })
+      if (message.role === "assistant") {
+        input.push({
+          role: "assistant",
+          content: [{ type: "output_text", text: message.content }],
+        })
+      } else {
+        input.push({
+          role: "user",
+          content: [{ type: "input_text", text: message.content }],
+        })
+      }
       continue
     }
 
-    const content: ResponseInputItem["content"] = []
+    if (message.role === "assistant") {
+      // Assistant turns: text → output_text. Images aren't valid here, skip them.
+      const content: Array<ResponseOutputContent> = []
+      for (const block of message.content) {
+        if (block.type === "text") {
+          content.push({ type: "output_text", text: block.text })
+        }
+      }
+      if (content.length > 0) {
+        input.push({ role: "assistant", content })
+      }
+      continue
+    }
+
+    // User turns: text → input_text, images → input_image.
+    const content: Array<ResponseInputContent> = []
     for (const block of message.content) {
       if (block.type === "text") {
         content.push({ type: "input_text", text: block.text })
@@ -54,7 +78,7 @@ export function translateToResponses(
     }
 
     if (content.length > 0) {
-      input.push({ role: message.role, content })
+      input.push({ role: "user", content })
     }
   }
 
@@ -65,8 +89,16 @@ export function translateToResponses(
     max_output_tokens: payload.max_completion_tokens,
     temperature: payload.temperature,
     top_p: payload.top_p,
-    user: payload.metadata?.user_id,
+    user: truncateUserId(payload.metadata?.user_id),
   }
+}
+
+// Upstream APIs (e.g. OpenAI-compatible) cap the `user` field at 64 chars.
+// Claude Code sends a longer hashed user_id, so we truncate to stay within
+// the limit while preserving enough entropy for upstream rate-limit buckets.
+function truncateUserId(userId: string | undefined): string | undefined {
+  if (!userId) return undefined
+  return userId.length > 64 ? userId.slice(0, 64) : userId
 }
 
 export function translateResponsesToAnthropic(

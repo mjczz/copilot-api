@@ -187,7 +187,7 @@ describe("OpenAI to Anthropic Non-Streaming Response Translation", () => {
     const anthropicResponse = translateToAnthropic(openAIResponse)
 
     expect(isValidAnthropicResponse(anthropicResponse)).toBe(true)
-    expect(anthropicResponse.stop_reason).toBe("max_tokens")
+    expect(anthropicResponse.stop_reason).toBe("max_completion_tokens")
   })
 })
 

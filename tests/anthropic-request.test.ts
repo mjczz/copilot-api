@@ -67,7 +67,7 @@ describe("Anthropic to OpenAI translation logic", () => {
     const anthropicPayload: AnthropicMessagesPayload = {
       model: "gpt-4o",
       messages: [{ role: "user", content: "Hello!" }],
-      max_tokens: 0,
+      max_completion_tokens: 0,
     }
 
     const openAIPayload = translateToOpenAI(anthropicPayload)
@@ -86,7 +86,7 @@ describe("Anthropic to OpenAI translation logic", () => {
         },
       ],
       temperature: 0.7,
-      max_tokens: 150,
+      max_completion_tokens: 150,
       top_p: 1,
       stream: false,
       metadata: { user_id: "user-123" },
@@ -107,7 +107,7 @@ describe("Anthropic to OpenAI translation logic", () => {
     const anthropicPayload: AnthropicMessagesPayload = {
       model: "gpt-4o",
       messages: [{ role: "user", content: "Hello!" }],
-      max_tokens: 0,
+      max_completion_tokens: 0,
     }
     const openAIPayload = translateToOpenAI(anthropicPayload)
     expect(isValidChatCompletionRequest(openAIPayload)).toBe(true)
@@ -141,7 +141,7 @@ describe("Anthropic to OpenAI translation logic", () => {
           ],
         },
       ],
-      max_tokens: 100,
+      max_completion_tokens: 100,
     }
     const openAIPayload = translateToOpenAI(anthropicPayload)
     expect(isValidChatCompletionRequest(openAIPayload)).toBe(true)
@@ -179,7 +179,7 @@ describe("Anthropic to OpenAI translation logic", () => {
           ],
         },
       ],
-      max_tokens: 100,
+      max_completion_tokens: 100,
     }
     const openAIPayload = translateToOpenAI(anthropicPayload)
     expect(isValidChatCompletionRequest(openAIPayload)).toBe(true)
@@ -216,7 +216,7 @@ describe("OpenAI Chat Completion v1 Request Payload Validation with Zod", () => 
         { role: "user", content: "What is the weather like in Boston?" },
       ],
       temperature: 0.7,
-      max_tokens: 150,
+      max_completion_tokens: 150,
       top_p: 1,
       frequency_penalty: 0,
       presence_penalty: 0,

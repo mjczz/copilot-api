@@ -4,7 +4,6 @@ import { logger } from "hono/logger"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
-const __filename = import.meta.filename
 const __dirname = import.meta.dirname
 
 import {
