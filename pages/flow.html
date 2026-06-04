@@ -1018,6 +1018,14 @@
             </select>
           </div>
           <div class="config-field" style="max-width:180px">
+            <span class="config-label">Transport</span>
+            <select id="transport" class="config-select">
+              <option value="auto">auto</option>
+              <option value="chat_completions">chat/completions</option>
+              <option value="responses">responses</option>
+            </select>
+          </div>
+          <div class="config-field" style="max-width:180px">
             <span class="config-label">Stream</span>
             <select id="stream" class="config-select">
               <option value="true" selected>enabled</option>
@@ -1583,13 +1591,16 @@
         }
 
         const targetModel = document.getElementById("model").value;
-        const isResponses = (state.responsesModels || []).includes(targetModel);
+        const transport = document.getElementById("transport")?.value || "auto";
+        const useResponses = transport === "auto"
+          ? (state.responsesModels || []).includes(targetModel)
+          : transport === "responses";
         const isAgentCall = (state.request.messages || []).some(
           m => m.role === "assistant" || m.role === "tool"
         );
         const token = state.cachedToken || "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
         let url, req, headers;
-        if (isResponses) {
+        if (useResponses) {
           req = translateToResponses(state.request);
           url = "https://api.githubcopilot.com/responses";
           headers = {
@@ -1735,8 +1746,11 @@
           return;
         }
         const targetModel = document.getElementById("model").value;
-        const isResponses = (state.responsesModels || []).includes(targetModel);
-        const req = isResponses
+        const transport = document.getElementById("transport")?.value || "auto";
+        const useResponses = transport === "auto"
+          ? (state.responsesModels || []).includes(targetModel)
+          : transport === "responses";
+        const req = useResponses
           ? translateToResponses(state.request)
           : translateToOpenAI(state.request, targetModel);
         const isAgent = (state.request.messages || []).some(
@@ -1752,7 +1766,7 @@
           .join("");
         const bodyHtml = `<div style="margin-top:8px;font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.12em;">body</div><pre style="margin:6px 0 0;font-family:var(--font-mono);font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;">${highlightJson(req)}</pre>`;
         body.innerHTML = headersHtml + bodyHtml;
-        transportEl.textContent = isResponses ? "copilot_responses" : "copilot";
+        transportEl.textContent = useResponses ? "copilot_responses" : "copilot";
         initiatorEl.textContent = isAgent ? "agent" : "user";
       }
 
@@ -1772,10 +1786,13 @@
 
       function renderLaneMidPath() {
         const targetModel = document.getElementById("model").value;
-        const isResponses = (state.responsesModels || []).includes(targetModel);
+        const transport = document.getElementById("transport")?.value || "auto";
+        const useResponses = transport === "auto"
+          ? (state.responsesModels || []).includes(targetModel)
+          : transport === "responses";
         const pathEl = document.getElementById("lane-mid-path");
         const laneHead = document.getElementById("lane-mid-head");
-        if (isResponses) {
+        if (useResponses) {
           pathEl.textContent = "POST /v1/responses";
           laneHead.dataset.protocol = "responses";
         } else {
@@ -2257,6 +2274,15 @@
         document.getElementById("model").addEventListener("change", async () => {
           if (state.request) {
             state.request.model = document.getElementById("model").value;
+            renderLaneIn();
+            renderLaneInCurl();
+            renderLaneMid();
+            await renderLaneMidCurl();
+          }
+          renderLaneMidPath();
+        });
+        document.getElementById("transport").addEventListener("change", async () => {
+          if (state.request) {
             renderLaneIn();
             renderLaneInCurl();
             renderLaneMid();

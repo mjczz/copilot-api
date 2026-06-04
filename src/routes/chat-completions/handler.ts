@@ -4,6 +4,7 @@ import consola from "consola"
 import { streamSSE, type SSEMessage } from "hono/streaming"
 
 import { awaitApproval } from "~/lib/approval"
+import { HTTPError } from "~/lib/error"
 import { checkRateLimit } from "~/lib/rate-limit"
 import { state } from "~/lib/state"
 import { getTokenCount } from "~/lib/tokenizer"
@@ -61,7 +62,12 @@ export async function handleCompletion(c: Context) {
     vision: true,
   }
 
-  const response = await dispatchChatCompletions(payload, ctx)
+  let response
+  try {
+    response = await dispatchChatCompletions(payload, ctx)
+  } catch (err) {
+    return handleDispatchError(c, err)
+  }
 
   if (isNonStreaming(response)) {
     consola.debug("Non-streaming response:", JSON.stringify(response))
@@ -74,9 +80,13 @@ export async function handleCompletion(c: Context) {
 
   consola.debug("Streaming response")
   return streamSSE(c, async (stream) => {
-    for await (const chunk of response) {
-      consola.debug("Streaming chunk:", JSON.stringify(chunk))
-      await stream.writeSSE(chunk as SSEMessage)
+    try {
+      for await (const chunk of response) {
+        consola.debug("Streaming chunk:", JSON.stringify(chunk))
+        await stream.writeSSE(chunk as SSEMessage)
+      }
+    } catch (err) {
+      consola.warn("Stream error:", err)
     }
   })
 }
@@ -89,3 +99,26 @@ const isStreamingResponse = (
   response: Awaited<ReturnType<typeof dispatchChatCompletions>>,
 ): response is AsyncIterable<{ data?: string; event?: string }> =>
   !Object.hasOwn(response, "choices")
+
+function handleDispatchError(c: Context, err: unknown) {
+  if (err instanceof HTTPError) {
+    const resp = err.response
+    const body = (() => {
+      try {
+        return resp.json() as Promise<Record<string, unknown>>
+      } catch {
+        return Promise.resolve({} as Record<string, unknown>)
+      }
+    })()
+    return body.then((res) => {
+      const rawError = res.error as Record<string, unknown> | undefined
+      const errorObj = rawError ?? {}
+      const msg =
+        typeof errorObj.message === "string" ? errorObj.message : err.message
+      const code =
+        typeof errorObj.code === "string" ? errorObj.code : "server_error"
+      return c.json({ error: { message: msg, code } }, resp.status)
+    })
+  }
+  throw err
+}
