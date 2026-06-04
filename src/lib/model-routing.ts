@@ -1,3 +1,5 @@
+import { state } from "~/lib/state"
+
 export type ModelAliasRule = {
   match: RegExp
   resolve: (id: string) => string
@@ -23,4 +25,18 @@ export function resolveModelAlias(id: string): string {
 
 export function getAllKnownAliases(): Array<string> {
   return ["claude-sonnet-4-*", "claude-opus-4-*"]
+}
+
+export function getConfiguredResponsesModels(): Array<string> {
+  return state.responsesModels || ["gpt-5.5"]
+}
+
+export function isResponsesModel(id: string): boolean {
+  return getConfiguredResponsesModels().includes(id)
+}
+
+export function getModelEndpointPreference(
+  id: string,
+): "responses" | "chat_completions" {
+  return isResponsesModel(id) ? "responses" : "chat_completions"
 }

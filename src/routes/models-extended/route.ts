@@ -2,7 +2,7 @@ import { Hono } from "hono"
 
 import type { ModelTransport } from "~/services/transport/types"
 
-import { getAllKnownAliases } from "~/lib/model-routing"
+import { getAllKnownAliases, isResponsesModel } from "~/lib/model-routing"
 import { state } from "~/lib/state"
 
 export const modelExtendedRoutes = new Hono()
@@ -27,8 +27,11 @@ modelExtendedRoutes.get("/", (c) => {
       ...m,
       transport: "copilot" as ModelTransport,
       aliases: getAllKnownAliases().filter((a) => matchWildcard(a, m.id)),
-      display_endpoint: "POST /v1/chat/completions",
-      chat_completions_compatible: true,
+      display_endpoint:
+        isResponsesModel(m.id) ? "POST /v1/responses" : (
+          "POST /v1/chat/completions"
+        ),
+      chat_completions_compatible: !isResponsesModel(m.id),
     })),
   })
 })

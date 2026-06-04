@@ -6,6 +6,7 @@ import consola from "consola"
 import { serve, type ServerHandler } from "srvx"
 import invariant from "tiny-invariant"
 
+import { loadModelRoutingConfig } from "./lib/model-routing-config"
 import { ensurePaths } from "./lib/paths"
 import { initProxyFromEnv } from "./lib/proxy"
 import { generateEnvScript } from "./lib/shell"
@@ -48,6 +49,7 @@ export async function runServer(options: RunServerOptions): Promise<void> {
   state.showToken = options.showToken
 
   await ensurePaths()
+  await loadModelRoutingConfig()
   await cacheVSCodeVersion()
 
   if (options.githubToken) {

@@ -68,6 +68,10 @@ export async function handleCompletion(c: Context) {
     return c.json(response)
   }
 
+  if (!isStreamingResponse(response)) {
+    throw new Error("Unexpected non-stream response shape")
+  }
+
   consola.debug("Streaming response")
   return streamSSE(c, async (stream) => {
     for await (const chunk of response) {
@@ -80,3 +84,8 @@ export async function handleCompletion(c: Context) {
 const isNonStreaming = (
   response: Awaited<ReturnType<typeof dispatchChatCompletions>>,
 ): response is ChatCompletionResponse => Object.hasOwn(response, "choices")
+
+const isStreamingResponse = (
+  response: Awaited<ReturnType<typeof dispatchChatCompletions>>,
+): response is AsyncIterable<{ data?: string; event?: string }> =>
+  !Object.hasOwn(response, "choices")

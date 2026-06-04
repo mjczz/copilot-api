@@ -23,6 +23,7 @@ export interface State {
     string,
     { baseUrl: string; apiKeyEnv: string }
   >
+  responsesModels?: Array<string>
 }
 
 export const state: State = {
@@ -30,4 +31,5 @@ export const state: State = {
   manualApprove: false,
   rateLimitWait: false,
   showToken: false,
+  responsesModels: [],
 }

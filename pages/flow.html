@@ -1024,6 +1024,21 @@
               <option value="false">disabled</option>
             </select>
           </div>
+          <div class="config-field" style="max-width:280px">
+            <span class="config-label">Responses Models</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <select id="responses-model-select" class="config-select" style="flex:1;min-width:0">
+                <option value="gpt-5.5">gpt-5.5</option>
+                <option value="gpt-5.4">gpt-5.4</option>
+                <option value="gpt-5.3-codex">gpt-5.3-codex</option>
+                <option value="gpt-5.2-codex">gpt-5.2-codex</option>
+                <option value="gpt-4o-2024-11-20">gpt-4o-2024-11-20</option>
+                <option value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</option>
+              </select>
+              <button id="add-responses-model" class="btn" style="padding:4px 10px;font-size:11px">Add</button>
+            </div>
+            <div id="responses-models-tags" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
+          </div>
         </div>
 
         <div class="actions">
@@ -1136,13 +1151,13 @@
 
         <!-- Lane 2: OpenAI -->
         <article class="lane" data-protocol="openai" id="lane-mid">
-          <header class="lane-head">
+          <header class="lane-head" id="lane-mid-head">
             <div>
               <div class="lane-title">
                 <span class="lane-title-dot"></span>
                 OpenAI · upstream
               </div>
-              <div class="lane-path">POST /v1/chat/completions</div>
+              <div class="lane-path" id="lane-mid-path">POST /v1/chat/completions</div>
             </div>
             <span class="lane-method">proxy → gpt-5.5</span>
           </header>
@@ -1460,7 +1475,43 @@
         }
         // NOTE: target model is what the user picked in the selector.
         out.model = targetModel || out.model;
-return out;
+        return out;
+      }
+
+      // Mirror of the proxy's translateToResponses for the middle lane.
+      function translateToResponses(anthropicPayload) {
+        const input = [];
+        if (anthropicPayload.system) {
+          const sysText = Array.isArray(anthropicPayload.system)
+            ? anthropicPayload.system.map(b => b.text || "").join("\n")
+            : anthropicPayload.system;
+          if (sysText) {
+            input.push({ role: "system", content: [{ type: "input_text", text: sysText }] });
+          }
+        }
+        for (const m of anthropicPayload.messages || []) {
+          if (typeof m.content === "string") {
+            input.push({ role: m.role, content: [{ type: "input_text", text: m.content }] });
+            continue;
+          }
+          const content = [];
+          for (const block of m.content) {
+            if (block.type === "text") content.push({ type: "input_text", text: block.text });
+            if (block.type === "image" && block.source?.data && block.source?.media_type) {
+              content.push({ type: "input_image", image_url: `data:${block.source.media_type};base64,${block.source.data}` });
+            }
+          }
+          if (content.length > 0) input.push({ role: m.role, content });
+        }
+        return {
+          model: resolveModelAlias(anthropicPayload.model) || anthropicPayload.model,
+          input,
+          stream: !!anthropicPayload.stream,
+          max_output_tokens: anthropicPayload.max_completion_tokens,
+          temperature: anthropicPayload.temperature,
+          top_p: anthropicPayload.top_p,
+          user: anthropicPayload.metadata?.user_id,
+        };
       }
 
       // ====================================================================
@@ -1531,26 +1582,46 @@ return out;
           } catch {}
         }
 
-        const openai = translateToOpenAI(state.request, document.getElementById("model").value);
-        const copilotUrl = "https://api.githubcopilot.com/chat/completions";
+        const targetModel = document.getElementById("model").value;
+        const isResponses = (state.responsesModels || []).includes(targetModel);
         const isAgentCall = (state.request.messages || []).some(
           m => m.role === "assistant" || m.role === "tool"
         );
         const token = state.cachedToken || "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-        const headers = {
-          "Authorization": `Bearer ${token}`,
-          "content-type": "application/json",
-          "editor-version": "vscode/1.95.3",
-          "editor-plugin-version": "copilot-chat/0.26.7",
-          "user-agent": "GitHubCopilotChat/0.26.7",
-          "openai-intent": "conversation-panel",
-          "x-github-api-version": "2025-04-01",
-          "x-request-id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-          "x-vscode-user-agent-library-version": "electron-fetch",
-          "x-initiator": isAgentCall ? "agent" : "user",
-        };
-        const body = JSON.stringify(openai, null, 2);
-        curlEl.innerHTML = buildCurlCommand("POST", copilotUrl, headers, body);
+        let url, req, headers;
+        if (isResponses) {
+          req = translateToResponses(state.request);
+          url = "https://api.githubcopilot.com/responses";
+          headers = {
+            "Authorization": `Bearer ${token}`,
+            "content-type": "application/json",
+            "editor-version": "vscode/1.95.3",
+            "editor-plugin-version": "copilot-chat/0.26.7",
+            "user-agent": "GitHubCopilotChat/0.26.7",
+            "openai-intent": "conversation-panel",
+            "x-github-api-version": "2025-04-01",
+            "x-request-id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            "x-vscode-user-agent-library-version": "electron-fetch",
+            "x-initiator": isAgentCall ? "agent" : "user",
+          };
+        } else {
+          req = translateToOpenAI(state.request, targetModel);
+          url = "https://api.githubcopilot.com/chat/completions";
+          headers = {
+            "Authorization": `Bearer ${token}`,
+            "content-type": "application/json",
+            "editor-version": "vscode/1.95.3",
+            "editor-plugin-version": "copilot-chat/0.26.7",
+            "user-agent": "GitHubCopilotChat/0.26.7",
+            "openai-intent": "conversation-panel",
+            "x-github-api-version": "2025-04-01",
+            "x-request-id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            "x-vscode-user-agent-library-version": "electron-fetch",
+            "x-initiator": isAgentCall ? "agent" : "user",
+          };
+        }
+        const body = JSON.stringify(req, null, 2);
+        curlEl.innerHTML = buildCurlCommand("POST", url, headers, body);
       }
 
       function renderLaneOutCurl() {
@@ -1663,7 +1734,11 @@ return out;
           initiatorEl.textContent = "—";
           return;
         }
-        const openai = translateToOpenAI(state.request, document.getElementById("model").value);
+        const targetModel = document.getElementById("model").value;
+        const isResponses = (state.responsesModels || []).includes(targetModel);
+        const req = isResponses
+          ? translateToResponses(state.request)
+          : translateToOpenAI(state.request, targetModel);
         const isAgent = (state.request.messages || []).some(
           m => m.role === "assistant" || m.role === "tool"
         );
@@ -1675,10 +1750,38 @@ return out;
         const headersHtml = headers
           .map(([k, v]) => `<div class="kv-row"><span class="kv-key">${escapeHtml(k)}</span><span class="kv-val code">${escapeHtml(v)}</span></div>`)
           .join("");
-        const bodyHtml = `<div style="margin-top:8px;font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.12em;">body</div><pre style="margin:6px 0 0;font-family:var(--font-mono);font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;">${highlightJson(openai)}</pre>`;
+        const bodyHtml = `<div style="margin-top:8px;font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.12em;">body</div><pre style="margin:6px 0 0;font-family:var(--font-mono);font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;">${highlightJson(req)}</pre>`;
         body.innerHTML = headersHtml + bodyHtml;
-        transportEl.textContent = state.transport;
+        transportEl.textContent = isResponses ? "copilot_responses" : "copilot";
         initiatorEl.textContent = isAgent ? "agent" : "user";
+      }
+
+      async function loadResponsesRouting() {
+        const endpoint = document.getElementById("endpoint").value.replace(/\/$/, "");
+        const baseUrl = endpoint.includes("/v1/messages")
+          ? endpoint.replace("/v1/messages", "")
+          : endpoint;
+        try {
+          const resp = await fetch(`${baseUrl}/settings/model-routing`);
+          if (resp.ok) {
+            const data = await resp.json();
+            state.responsesModels = data.responses_models || [];
+          }
+        } catch { }
+      }
+
+      function renderLaneMidPath() {
+        const targetModel = document.getElementById("model").value;
+        const isResponses = (state.responsesModels || []).includes(targetModel);
+        const pathEl = document.getElementById("lane-mid-path");
+        const laneHead = document.getElementById("lane-mid-head");
+        if (isResponses) {
+          pathEl.textContent = "POST /v1/responses";
+          laneHead.dataset.protocol = "responses";
+        } else {
+          pathEl.textContent = "POST /v1/chat/completions";
+          laneHead.dataset.protocol = "openai";
+        }
       }
 
       function renderLaneOut() {
@@ -2159,13 +2262,92 @@ return out;
             renderLaneMid();
             await renderLaneMidCurl();
           }
+          renderLaneMidPath();
         });
+
+        // ====================================================================
+        // RESPONSES MODELS TAGS
+        // ====================================================================
+        async function loadResponsesModels() {
+          const endpoint = document.getElementById("endpoint").value.replace(/\/$/, "");
+          const baseUrl = endpoint.includes("/v1/messages")
+            ? endpoint.replace("/v1/messages", "")
+            : endpoint;
+          try {
+            const resp = await fetch(`${baseUrl}/settings/model-routing`);
+            if (resp.ok) {
+              const data = await resp.json();
+              renderResponsesModelTags(data.responses_models || []);
+              state.responsesModels = data.responses_models || [];
+              renderLaneMidPath();
+            }
+          } catch { }
+        }
+
+        function renderResponsesModelTags(models) {
+          const container = document.getElementById("responses-models-tags");
+          container.innerHTML = models.map((m) => `
+            <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;background:var(--c-openai);color:#fff">
+              ${m}
+              <button class="rm-tag-remove" data-model="${m}" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;line-height:1;font-size:13px">×</button>
+            </span>
+          `).join("");
+          container.querySelectorAll(".rm-tag-remove").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+              const model = btn.dataset.model;
+              const endpoint = document.getElementById("endpoint").value.replace(/\/$/, "");
+              const baseUrl = endpoint.includes("/v1/messages")
+                ? endpoint.replace("/v1/messages", "")
+                : endpoint;
+              const resp = await fetch(`${baseUrl}/settings/model-routing`);
+              if (resp.ok) {
+                const data = await resp.json();
+                const updated = (data.responses_models || []).filter((x) => x !== model);
+                await fetch(`${baseUrl}/settings/model-routing`, {
+                  method: "POST",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ responses_models: updated }),
+                });
+                renderResponsesModelTags(updated);
+                state.responsesModels = updated;
+                renderLaneMidPath();
+              }
+            });
+          });
+        }
+
+        document.getElementById("add-responses-model").addEventListener("click", async () => {
+          const select = document.getElementById("responses-model-select");
+          const model = select.value;
+          const endpoint = document.getElementById("endpoint").value.replace(/\/$/, "");
+          const baseUrl = endpoint.includes("/v1/messages")
+            ? endpoint.replace("/v1/messages", "")
+            : endpoint;
+          const resp = await fetch(`${baseUrl}/settings/model-routing`);
+          if (resp.ok) {
+            const data = await resp.json();
+            const current = data.responses_models || [];
+            if (!current.includes(model)) {
+              const updated = [...current, model];
+              await fetch(`${baseUrl}/settings/model-routing`, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ responses_models: updated }),
+              });
+              renderResponsesModelTags(updated);
+              state.responsesModels = updated;
+              renderLaneMidPath();
+            }
+          }
+        });
+
         attachCopyButtons();
         attachEventsToggle();
         // Initial state
         applyPreset("simple");
         updateLineNumbers();
         renderTelemetry();
+        loadResponsesModels();
       }
 
       if (document.readyState === "loading") {

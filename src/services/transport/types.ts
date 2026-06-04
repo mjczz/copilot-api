@@ -1,7 +1,9 @@
 import type { ChatCompletionResponse } from "./copilot-types"
+import type { ResponsesResponse } from "./responses-types"
 
 export type ModelTransport =
   | "copilot"
+  | "copilot_responses"
   | "openai_native"
   | "openai_compatible_proxy"
 
@@ -18,8 +20,9 @@ export interface DispatchContext {
 // `JSON.parse(rawEvent.data)`) working without changes. Callers treat each
 // item as `unknown` at the type level and parse as needed.
 export type DispatchResult =
-  | AsyncIterable<{ data?: string }>
+  | AsyncIterable<{ data?: string; event?: string }>
   | ChatCompletionResponse
+  | ResponsesResponse
 
 // Re-export the canonical types from copilot-types so the transport layer is
 // the single source of truth. Do not duplicate definitions here.
