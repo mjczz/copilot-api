@@ -41,6 +41,10 @@
         --c-openai-line: rgba(9, 105, 218, 0.4);
         --c-gpt55: #8250df;
         --c-gpt55-soft: rgba(130, 80, 223, 0.1);
+        --c-anthropic-out: #b16a3a;
+        --c-anthropic-out-soft: rgba(177, 106, 58, 0.1);
+        --c-messages: #6f42c1;
+        --c-messages-soft: rgba(111, 66, 193, 0.08);
         --c-translate: #bf8700;
 
         /* semantics */
@@ -417,6 +421,14 @@
         border-color: rgba(94, 234, 212, 0.3);
         box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.05);
       }
+      .lane[data-protocol="anthropic"] {
+        border-color: rgba(177, 106, 58, 0.3);
+        box-shadow: 0 0 0 1px rgba(177, 106, 58, 0.05);
+      }
+      .lane[data-protocol="messages"] {
+        border-color: rgba(111, 66, 193, 0.3);
+        box-shadow: 0 0 0 1px rgba(111, 66, 193, 0.05);
+      }
       .lane[data-protocol="anthropic-out"] {
         border-color: rgba(255, 138, 91, 0.3);
         box-shadow: 0 0 0 1px rgba(255, 138, 91, 0.05);
@@ -432,6 +444,14 @@
       .lane.active[data-protocol="openai"] {
         border-color: var(--c-openai);
         color: var(--c-openai);
+      }
+      .lane.active[data-protocol="anthropic"] {
+        border-color: var(--c-anthropic-out);
+        color: var(--c-anthropic-out);
+      }
+      .lane.active[data-protocol="messages"] {
+        border-color: var(--c-messages);
+        color: var(--c-messages);
       }
 
       .lane-head {
@@ -455,6 +475,8 @@
       .lane[data-protocol="anthropic-in"] .lane-title { color: var(--c-anthropic); }
       .lane[data-protocol="openai"] .lane-title { color: var(--c-openai); }
       .lane[data-protocol="anthropic-out"] .lane-title { color: var(--c-anthropic); }
+      .lane[data-protocol="anthropic"] .lane-title { color: var(--c-anthropic-out); }
+      .lane[data-protocol="messages"] .lane-title { color: var(--c-messages); }
       .lane-title-dot {
         width: 6px;
         height: 6px;
@@ -1009,20 +1031,36 @@
           <div class="config-field" style="max-width:240px">
             <span class="config-label">Target model</span>
             <select id="model" class="config-select">
-              <option value="gpt-5.5" selected>gpt-5.5</option>
-              <option value="gpt-5.4">gpt-5.4</option>
-              <option value="gpt-5.3-codex">gpt-5.3-codex</option>
-              <option value="gpt-5.2-codex">gpt-5.2-codex</option>
-              <option value="gpt-4o-2024-11-20">gpt-4o-2024-11-20</option>
-              <option value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</option>
+              <optgroup label="Anthropic (Copilot)">
+                <option value="claude-sonnet-4-8" selected>claude-sonnet-4-8</option>
+                <option value="claude-opus-4-8">claude-opus-4-8</option>
+                <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
+                <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
+                <option value="claude-opus-4-1">claude-opus-4-1</option>
+                <option value="claude-haiku-4-5">claude-haiku-4-5</option>
+                <option value="claude-sonnet-4-0">claude-sonnet-4-0</option>
+                <option value="claude-opus-4-0">claude-opus-4-0</option>
+                <option value="claude-3-7-sonnet-latest">claude-3-7-sonnet-latest</option>
+                <option value="claude-3-5-sonnet-latest">claude-3-5-sonnet-latest</option>
+                <option value="claude-3-5-haiku-latest">claude-3-5-haiku-latest</option>
+              </optgroup>
+              <optgroup label="GPT (Copilot)">
+                <option value="gpt-5.5">gpt-5.5</option>
+                <option value="gpt-5.4">gpt-5.4</option>
+                <option value="gpt-5.3-codex">gpt-5.3-codex</option>
+                <option value="gpt-5.2-codex">gpt-5.2-codex</option>
+                <option value="gpt-4o-2024-11-20">gpt-4o-2024-11-20</option>
+                <option value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</option>
+              </optgroup>
             </select>
           </div>
           <div class="config-field" style="max-width:180px">
             <span class="config-label">Transport</span>
             <select id="transport" class="config-select">
               <option value="auto">auto</option>
-              <option value="chat_completions">chat/completions</option>
-              <option value="responses">responses</option>
+              <option value="messages">/v1/messages</option>
+              <option value="responses">/v1/responses</option>
+              <option value="chat_completions">/v1/chat/completions</option>
             </select>
           </div>
           <div class="config-field" style="max-width:180px">
@@ -1036,12 +1074,14 @@
             <span class="config-label">Responses Models</span>
             <div style="display:flex;gap:6px;align-items:center">
               <select id="responses-model-select" class="config-select" style="flex:1;min-width:0">
-                <option value="gpt-5.5">gpt-5.5</option>
-                <option value="gpt-5.4">gpt-5.4</option>
-                <option value="gpt-5.3-codex">gpt-5.3-codex</option>
-                <option value="gpt-5.2-codex">gpt-5.2-codex</option>
-                <option value="gpt-4o-2024-11-20">gpt-4o-2024-11-20</option>
-                <option value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</option>
+                <optgroup label="GPT (Copilot)">
+                  <option value="gpt-5.5">gpt-5.5</option>
+                  <option value="gpt-5.4">gpt-5.4</option>
+                  <option value="gpt-5.3-codex">gpt-5.3-codex</option>
+                  <option value="gpt-5.2-codex">gpt-5.2-codex</option>
+                  <option value="gpt-4o-2024-11-20">gpt-4o-2024-11-20</option>
+                  <option value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</option>
+                </optgroup>
               </select>
               <button id="add-responses-model" class="btn" style="padding:4px 10px;font-size:11px">Add</button>
             </div>
@@ -1167,7 +1207,7 @@
               </div>
               <div class="lane-path" id="lane-mid-path">POST /v1/chat/completions</div>
             </div>
-            <span class="lane-method">proxy → gpt-5.5</span>
+            <span class="lane-method" id="lane-mid-method">proxy → gpt-5.5</span>
           </header>
           <div class="lane-body" id="lane-mid-body">
             <div class="empty">translated body will appear here</div>
@@ -1313,14 +1353,14 @@
       // ====================================================================
       const PRESETS = {
         simple: {
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 1024,
           messages: [
             { role: "user", content: "Say hello in three languages." },
           ],
         },
         tools: {
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 1024,
           tools: [
             {
@@ -1341,7 +1381,7 @@
           ],
         },
         image: {
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 512,
           messages: [
             {
@@ -1361,7 +1401,7 @@
           ],
         },
         thinking: {
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 4096,
           thinking: { type: "enabled", budget_tokens: 2048 },
           messages: [
@@ -1383,8 +1423,8 @@
       // Mirror of the proxy's resolveModelAlias (src/lib/model-routing.ts)
       // — for the left lane's "alias" indicator.
       const MODEL_ALIASES = [
-        { match: /^claude-sonnet-4-/, resolve: () => "claude-sonnet-4", notes: "Claude Code subagent ids" },
-        { match: /^claude-opus-4-/,   resolve: () => "claude-opus-4",   notes: "Claude Code subagent ids" },
+        { match: /^claude-sonnet-4-\d{8}$/, resolve: () => "claude-sonnet-4", notes: "Claude Code subagent ids" },
+        { match: /^claude-opus-4-\d{8}$/,   resolve: () => "claude-opus-4",   notes: "Claude Code subagent ids" },
       ];
       function resolveModelAlias(id) {
         if (!id) return id;
@@ -1392,6 +1432,24 @@
           if (r.match.test(id)) return r.resolve(id);
         }
         return id;
+      }
+
+      // Decide what the upstream id will be for the selected target model.
+      // The proxy always talks to api.githubcopilot.com; the only decision
+      // is which Copilot endpoint to hit:
+      // - claude-* → /v1/messages (Anthropic-format passthrough)
+      // - responses_models → /v1/responses
+      // - everything else → /v1/chat/completions
+      function resolveRouting(id) {
+        const aliased = resolveModelAlias(id);
+        if (/^claude-/.test(aliased)) {
+          return { upstream: "copilot_messages", model: aliased };
+        }
+        const isResponses = (state.responsesModels || []).includes(aliased);
+        return {
+          upstream: isResponses ? "copilot_responses" : "copilot",
+          model: aliased,
+        };
       }
 
       // Mirror of the proxy's translateToOpenAI for the middle lane.
@@ -1592,15 +1650,37 @@
 
         const targetModel = document.getElementById("model").value;
         const transport = document.getElementById("transport")?.value || "auto";
-        const useResponses = transport === "auto"
-          ? (state.responsesModels || []).includes(targetModel)
-          : transport === "responses";
+        const routing = resolveRouting(targetModel);
+        const upstreamModel = routing.model;
+        const autoEndpoint = routing.upstream === "copilot_messages"
+          ? "messages"
+          : (state.responsesModels || []).includes(upstreamModel) ? "responses" : "chat_completions";
+        const forcedEndpoint = transport === "auto" ? autoEndpoint : transport;
+        const useMessages = forcedEndpoint === "messages";
+        const useResponses = forcedEndpoint === "responses";
         const isAgentCall = (state.request.messages || []).some(
           m => m.role === "assistant" || m.role === "tool"
         );
         const token = state.cachedToken || "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
         let url, req, headers;
-        if (useResponses) {
+        if (useMessages) {
+          // Anthropic-format passthrough to Copilot's /v1/messages.
+          req = state.request;
+          url = "https://api.githubcopilot.com/v1/messages";
+          headers = {
+            "Authorization": `Bearer ${token}`,
+            "content-type": "application/json",
+            "editor-version": "vscode/1.95.3",
+            "editor-plugin-version": "copilot-chat/0.26.7",
+            "user-agent": "GitHubCopilotChat/0.26.7",
+            "openai-intent": "conversation-panel",
+            "x-github-api-version": "2025-04-01",
+            "x-request-id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            "x-vscode-user-agent-library-version": "electron-fetch",
+            "x-initiator": isAgentCall ? "agent" : "user",
+            "accept": "application/json",
+          };
+        } else if (useResponses) {
           req = translateToResponses(state.request);
           url = "https://api.githubcopilot.com/responses";
           headers = {
@@ -1747,12 +1827,19 @@
         }
         const targetModel = document.getElementById("model").value;
         const transport = document.getElementById("transport")?.value || "auto";
-        const useResponses = transport === "auto"
-          ? (state.responsesModels || []).includes(targetModel)
-          : transport === "responses";
-        const req = useResponses
-          ? translateToResponses(state.request)
-          : translateToOpenAI(state.request, targetModel);
+        const routing = resolveRouting(targetModel);
+        const upstreamModel = routing.model;
+        const autoEndpoint = routing.upstream === "copilot_messages"
+          ? "messages"
+          : (state.responsesModels || []).includes(upstreamModel) ? "responses" : "chat_completions";
+        const forcedEndpoint = transport === "auto" ? autoEndpoint : transport;
+        const useMessages = forcedEndpoint === "messages";
+        const useResponses = forcedEndpoint === "responses";
+        const req = useMessages
+          ? state.request
+          : useResponses
+            ? translateToResponses(state.request)
+            : translateToOpenAI(state.request, targetModel);
         const isAgent = (state.request.messages || []).some(
           m => m.role === "assistant" || m.role === "tool"
         );
@@ -1766,7 +1853,11 @@
           .join("");
         const bodyHtml = `<div style="margin-top:8px;font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.12em;">body</div><pre style="margin:6px 0 0;font-family:var(--font-mono);font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;">${highlightJson(req)}</pre>`;
         body.innerHTML = headersHtml + bodyHtml;
-        transportEl.textContent = useResponses ? "copilot_responses" : "copilot";
+        transportEl.textContent = useMessages
+          ? "copilot_messages"
+          : useResponses
+            ? "copilot_responses"
+            : "copilot";
         initiatorEl.textContent = isAgent ? "agent" : "user";
       }
 
@@ -1787,18 +1878,28 @@
       function renderLaneMidPath() {
         const targetModel = document.getElementById("model").value;
         const transport = document.getElementById("transport")?.value || "auto";
-        const useResponses = transport === "auto"
-          ? (state.responsesModels || []).includes(targetModel)
-          : transport === "responses";
+        const routing = resolveRouting(targetModel);
+        const upstreamModel = routing.model;
+        const autoEndpoint = routing.upstream === "copilot_messages"
+          ? "messages"
+          : (state.responsesModels || []).includes(upstreamModel) ? "responses" : "chat_completions";
+        const forcedEndpoint = transport === "auto" ? autoEndpoint : transport;
+        const useMessages = forcedEndpoint === "messages";
+        const useResponses = forcedEndpoint === "responses";
         const pathEl = document.getElementById("lane-mid-path");
         const laneHead = document.getElementById("lane-mid-head");
-        if (useResponses) {
+        const methodEl = document.getElementById("lane-mid-method");
+        if (useMessages) {
+          pathEl.textContent = "POST /v1/messages";
+          laneHead.dataset.protocol = "messages";
+        } else if (useResponses) {
           pathEl.textContent = "POST /v1/responses";
           laneHead.dataset.protocol = "responses";
         } else {
           pathEl.textContent = "POST /v1/chat/completions";
           laneHead.dataset.protocol = "openai";
         }
+        if (methodEl) methodEl.textContent = `proxy → ${upstreamModel}`;
       }
 
       function renderLaneOut() {

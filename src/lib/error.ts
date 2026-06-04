@@ -5,10 +5,14 @@ import consola from "consola"
 
 export class HTTPError extends Error {
   response: Response
+  // Pre-consumed body so callers don't trip on "Body already used" if the
+  // response was already read in the transport layer.
+  bodyText?: string
 
-  constructor(message: string, response: Response) {
+  constructor(message: string, response: Response, bodyText?: string) {
     super(message)
     this.response = response
+    this.bodyText = bodyText
   }
 }
 
@@ -16,7 +20,10 @@ export async function forwardError(c: Context, error: unknown) {
   consola.error("Error occurred:", error)
 
   if (error instanceof HTTPError) {
-    const errorText = await error.response.text()
+    const errorText =
+      error.bodyText !== undefined ?
+        error.bodyText
+      : await error.response.text()
     let errorJson: unknown
     try {
       errorJson = JSON.parse(errorText)

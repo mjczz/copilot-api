@@ -4,6 +4,7 @@ import type { ResponsesResponse } from "./responses-types"
 export type ModelTransport =
   | "copilot"
   | "copilot_responses"
+  | "copilot_messages"
   | "openai_native"
   | "openai_compatible_proxy"
 
