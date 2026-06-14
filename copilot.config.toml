@@ -1,7 +1,8 @@
 # Layered on top of ~/.codex/config.toml via:
-#   codex --profile-v2 copilot
-# Only the copilot-specific bits live here; everything else (personality,
-# notify, projects, mcp_servers, ...) is inherited from the base config.
+#   codex --profile copilot
+# Keep only copilot-specific overrides here. Shared settings such as
+# personality, notify, projects, mcp_servers, and hooks should live in
+# ~/.codex/config.toml so Codex can manage profile-local state safely.
 
 model = "gpt-5.4"                  # verified present in: curl -s http://localhost:4141/v1/models
                                   # other reasoning ids: gpt-5.4, gpt-5.3-codex ; non-reasoning: gpt-4.1, gpt-4o
