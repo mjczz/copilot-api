@@ -17,6 +17,7 @@ import { messageRoutes } from "./routes/messages/route"
 import { modelAliasesRoutes } from "./routes/model-aliases/route"
 import { modelExtendedRoutes } from "./routes/models-extended/route"
 import { modelRoutes } from "./routes/models/route"
+import { responsesRoutes } from "./routes/responses/route"
 import { tokenRoute } from "./routes/token/route"
 import { usageRoute } from "./routes/usage/route"
 
@@ -57,6 +58,7 @@ server.post("/v1/settings/model-routing", async (c) => {
   return c.json(await saveModelRoutingConfig(body.responses_models || []))
 })
 server.route("/v1/chat/completions", completionRoutes)
+server.route("/v1/responses", responsesRoutes)
 server.route("/v1/models", modelRoutes)
 server.route("/v1/embeddings", embeddingRoutes)
 server.route("/token", tokenRoute)
