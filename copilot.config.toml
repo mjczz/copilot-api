@@ -1,0 +1,22 @@
+# Layered on top of ~/.codex/config.toml via:
+#   codex --profile-v2 copilot
+# Only the copilot-specific bits live here; everything else (personality,
+# notify, projects, mcp_servers, ...) is inherited from the base config.
+
+model = "gpt-5.4"                  # verified present in: curl -s http://localhost:4141/v1/models
+                                  # other reasoning ids: gpt-5.4, gpt-5.3-codex ; non-reasoning: gpt-4.1, gpt-4o
+model_provider = "copilot"
+model_reasoning_effort = "high"
+
+[model_providers.copilot]
+name = "Local copilot-api (GitHub Copilot)"
+base_url = "http://localhost:4141/v1"
+env_key = "dummy"
+wire_api = "responses"             # this codex build rejects "chat"; forces POST {base_url}/responses
+requires_openai_auth = false       # the proxy does no inbound auth; any/dummy bearer works
+request_max_retries = 4
+stream_max_retries = 10
+stream_idle_timeout_ms = 300000
+
+[projects."/Users/ccc/.codex"]
+trust_level = "trusted"
