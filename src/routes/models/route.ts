@@ -23,6 +23,11 @@ modelRoutes.get("/", async (c) => {
       display_name: model.name,
     }))
 
+    console.log("支持的大模型")
+    // eslint-disable-next-line array-callback-return
+    models?.map((v) => {
+      console.log(v.id)
+    })
     return c.json({
       object: "list",
       data: models,

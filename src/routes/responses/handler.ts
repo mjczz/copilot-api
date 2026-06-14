@@ -8,6 +8,9 @@ import type {
   ResponsesResponse,
 } from "~/services/transport/responses-types"
 
+import { awaitApproval } from "~/lib/approval"
+import { checkRateLimit } from "~/lib/rate-limit"
+import { state } from "~/lib/state"
 import { copilotCreateResponses } from "~/services/transport/responses"
 
 // The Responses spec's `tools` field isn't modelled on ResponsesPayload, but
@@ -34,11 +37,11 @@ const UNSUPPORTED_TOOL_TYPES = new Set(["image_generation"])
 // Responses events back, so we forward the request (sanitising tools) and
 // relay the upstream SSE stream without any translation.
 export async function handleResponses(c: Context) {
-  // await checkRateLimit(state)
-  //
-  // if (state.manualApprove) {
-  //   await awaitApproval()
-  // }
+  await checkRateLimit(state)
+
+  if (state.manualApprove) {
+    await awaitApproval()
+  }
 
   // The TS type is a minimal subset of the Responses spec; the runtime object
   // keeps every field the client sent (instructions, tools, reasoning, ...),
